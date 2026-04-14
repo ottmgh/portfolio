@@ -1,0 +1,156 @@
+---
+import { getCollection } from 'astro:content';
+
+const [homeEntry] = await getCollection('home');
+
+if (!homeEntry) {
+  throw new Error('Missing homepage content entry in src/content/site/home.yml');
+}
+
+const home = homeEntry.data;
+---
+
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{home.metaTitle}</title>
+    <meta name="description" content={home.metaDescription} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={home.siteTitle} />
+    <meta property="og:title" content={home.metaTitle} />
+    <meta property="og:description" content={home.metaDescription} />
+    {home.ogImage && <meta property="og:image" content={home.ogImage} />}
+    <style is:inline>
+      body {
+        margin: 0;
+        background-color: #000;
+        color: white;
+        font-family: 'Courier New', Courier, monospace;
+        height: 300vh;
+        overflow-x: hidden;
+      }
+
+      #video-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10;
+        pointer-events: none;
+      }
+
+      video {
+        width: 80%;
+        transition: transform 0.1s ease-out, opacity 0.1s ease-out;
+      }
+
+      #infinite-space {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 5;
+      }
+
+      .center-name {
+        font-size: 2rem;
+        letter-spacing: 5px;
+        text-align: center;
+      }
+
+      .work-item {
+        position: absolute;
+        text-decoration: none;
+        color: #555;
+        transition: color 0.3s;
+        text-align: center;
+      }
+
+      .work-item img {
+        width: 150px;
+        display: block;
+        margin-bottom: 5px;
+        filter: grayscale(100%);
+        transition: filter 0.3s, transform 0.3s;
+      }
+
+      .work-item:hover img {
+        filter: grayscale(0%);
+        transform: scale(1.1);
+      }
+
+      .work-item:hover {
+        color: #fff;
+      }
+
+      #work1 {
+        top: 20%;
+        left: 15%;
+      }
+
+      #work2 {
+        top: 15%;
+        right: 20%;
+      }
+
+      #work3 {
+        bottom: 25%;
+        left: 20%;
+      }
+
+      #work4 {
+        bottom: 20%;
+        right: 15%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="video-container">
+      <video id="myVideo" autoplay muted loop poster={home.heroPoster}>
+        <source src={home.heroVideo} type="video/mp4" />
+      </video>
+    </div>
+
+    <div id="infinite-space">
+      <div class="center-name">
+        {home.artistName}
+        <p style="font-size: 0.8rem; opacity: 0.5;">{home.heroSublabel}</p>
+      </div>
+
+      <a href="pagina-lavoro-1.html" class="work-item" id="work1">
+        {home.homepageProjectImage ? (
+          <img src={home.homepageProjectImage} alt="Lavoro 1" />
+        ) : (
+          <span
+            aria-hidden="true"
+            style="display: block; width: 150px; height: 84px; margin-bottom: 5px;"
+          ></span>
+        )}
+        <span>{home.homepageProjectLabel}</span>
+      </a>
+    </div>
+
+    <script is:inline>
+      window.addEventListener('scroll', () => {
+        const scroll = window.scrollY;
+        const video = document.getElementById('myVideo');
+
+        const scale = Math.max(0.2, 1 - scroll / 1000);
+        const opacity = Math.max(0, 1 - scroll / 800);
+
+        video.style.transform = `scale(${scale})`;
+        video.style.opacity = opacity;
+      });
+    </script>
+  </body>
+</html>

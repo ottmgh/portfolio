@@ -1,0 +1,115 @@
+media:
+  - name: images
+    label: Images
+    input: public/media/images
+    output: /media/images
+    extensions: [jpg, jpeg, png, webp, svg]
+  - name: videos
+    label: Videos
+    input: public/media/videos
+    output: /media/videos
+    categories: [video]
+
+content:
+  - name: home
+    label: Homepage
+    type: file
+    path: src/content/site/home.yml
+    fields:
+      - name: siteTitle
+        label: Site title
+        type: string
+      - name: metaTitle
+        label: Meta title
+        type: string
+      - name: metaDescription
+        label: Meta description
+        type: text
+      - name: artistName
+        label: Artist name
+        type: string
+      - name: heroSublabel
+        label: Hero sublabel
+        type: string
+      - name: heroVideo
+        label: Hero video
+        type: file
+        options:
+          media: videos
+          categories: [video]
+      - name: heroPoster
+        label: Hero poster
+        type: image
+        required: false
+        options:
+          media: images
+      - name: homepageProjectLabel
+        label: Homepage project label
+        type: string
+      - name: homepageProjectImage
+        label: Homepage project image
+        type: image
+        required: false
+        options:
+          media: images
+      - name: ogImage
+        label: Open Graph image
+        type: image
+        required: false
+        options:
+          media: images
+
+  - name: projects
+    label: Projects
+    type: collection
+    path: src/content/projects
+    filename: "{primary}.md"
+    view:
+      fields: [title, year, category, status, sortOrder]
+      primary: title
+      sort: [sortOrder, year, title]
+      search: [title, category, description]
+      default:
+        sort: sortOrder
+        order: asc
+    fields:
+      - name: title
+        label: Title
+        type: string
+      - name: year
+        label: Year
+        type: number
+      - name: category
+        label: Category
+        type: string
+      - name: description
+        label: Description
+        type: text
+      - name: format
+        label: Format
+        type: string
+        required: false
+      - name: duration
+        label: Duration
+        type: string
+        required: false
+      - name: sortOrder
+        label: Sort order
+        type: number
+      - name: video
+        label: Project video
+        type: file
+        required: false
+        options:
+          media: videos
+          categories: [video]
+      - name: poster
+        label: Poster
+        type: image
+        required: false
+        options:
+          media: images
+      - name: status
+        label: Status
+        type: string
+        required: false
