@@ -1,0 +1,106 @@
+media:
+  - name: images
+    label: Images
+    input: public/media/images
+    output: /media/images
+    extensions: [jpg, jpeg, png, webp, svg]
+  - name: videos
+    label: Videos
+    input: public/media/videos
+    output: /media/videos
+    categories: [video]
+
+content:
+  - name: home
+    label: Homepage
+    type: file
+    path: src/content/site/home.yml
+    fields:
+      - name: siteTitle
+        label: Site title
+        type: string
+      - name: metaTitle
+        label: Meta title
+        type: string
+      - name: metaDescription
+        label: Meta description
+        type: text
+      - name: artistName
+        label: Artist name
+        type: string
+      - name: artistSubtitle
+        label: Artist subtitle
+        type: string
+      - name: introVideo
+        label: Intro video
+        type: file
+        options:
+          media: videos
+          categories: [video]
+      - name: skipLabel
+        label: Skip label
+        type: string
+      - name: hintText
+        label: Hint text
+        type: string
+      - name: ogImage
+        label: Open Graph image
+        type: image
+        required: false
+        options:
+          media: images
+
+  - name: projects
+    label: Projects
+    type: collection
+    path: src/content/projects
+    filename: "{primary}.md"
+    view:
+      fields: [projectId, title, year, category, status]
+      primary: title
+      sort: [projectId, year, title]
+      search: [title, category, description]
+      default:
+        sort: projectId
+        order: asc
+    fields:
+      - name: projectId
+        label: Project ID
+        type: number
+      - name: title
+        label: Title
+        type: string
+      - name: year
+        label: Year
+        type: number
+      - name: category
+        label: Category
+        type: select
+        options:
+          values:
+            - Film
+            - Documentary
+            - Short Film
+            - Experimental
+      - name: description
+        label: Description
+        type: text
+      - name: format
+        label: Format
+        type: string
+        required: false
+      - name: duration
+        label: Duration
+        type: string
+        required: false
+      - name: video
+        label: Project video
+        type: file
+        required: false
+        options:
+          media: videos
+          categories: [video]
+      - name: status
+        label: Status
+        type: string
+        required: false

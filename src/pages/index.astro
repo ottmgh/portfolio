@@ -1,0 +1,54 @@
+---
+import { buildTreeData, getPortfolioContent } from '../lib/portfolio';
+
+const { home, projects } = await getPortfolioContent();
+const treeData = buildTreeData(projects);
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{home.metaTitle}</title>
+    <meta name="description" content={home.metaDescription} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={home.siteTitle} />
+    <meta property="og:title" content={home.metaTitle} />
+    <meta property="og:description" content={home.metaDescription} />
+    {home.ogImage && <meta property="og:image" content={home.ogImage} />}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="/styles/home.css" />
+  </head>
+  <body>
+    <div id="video-last-frame"></div>
+
+    <div id="video-intro">
+      <video id="intro-video" muted playsinline>
+        <source src={home.introVideo} type="video/mp4" />
+      </video>
+      <div id="video-progress" style="width: 0%"></div>
+      <button id="skip-btn">{home.skipLabel}</button>
+    </div>
+
+    <div id="tree-view">
+      <div id="tree-container">
+        <svg id="tree-lines"></svg>
+
+        <div class="root-node" id="root">
+          <div class="root-pulse"></div>
+          <h1>{home.artistName}</h1>
+          <span class="subtitle">{home.artistSubtitle}</span>
+        </div>
+      </div>
+
+      <div class="hint" id="hint-text">{home.hintText}</div>
+    </div>
+
+    <div id="page-transition"></div>
+
+    <script id="tree-data" type="application/json" is:inline set:html={JSON.stringify(treeData)}></script>
+    <script src="/scripts/home.js" is:inline></script>
+  </body>
+</html>
