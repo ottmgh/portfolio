@@ -28,30 +28,21 @@ content:
       - name: artistName
         label: Artist name
         type: string
-      - name: heroSublabel
-        label: Hero sublabel
+      - name: artistSubtitle
+        label: Artist subtitle
         type: string
-      - name: heroVideo
-        label: Hero video
+      - name: introVideo
+        label: Intro video
         type: file
         options:
           media: videos
           categories: [video]
-      - name: heroPoster
-        label: Hero poster
-        type: image
-        required: false
-        options:
-          media: images
-      - name: homepageProjectLabel
-        label: Homepage project label
+      - name: skipLabel
+        label: Skip label
         type: string
-      - name: homepageProjectImage
-        label: Homepage project image
-        type: image
-        required: false
-        options:
-          media: images
+      - name: hintText
+        label: Hint text
+        type: string
       - name: ogImage
         label: Open Graph image
         type: image
@@ -65,14 +56,17 @@ content:
     path: src/content/projects
     filename: "{primary}.md"
     view:
-      fields: [title, year, category, status, sortOrder]
+      fields: [projectId, title, year, category, status]
       primary: title
-      sort: [sortOrder, year, title]
+      sort: [projectId, year, title]
       search: [title, category, description]
       default:
-        sort: sortOrder
+        sort: projectId
         order: asc
     fields:
+      - name: projectId
+        label: Project ID
+        type: number
       - name: title
         label: Title
         type: string
@@ -81,7 +75,13 @@ content:
         type: number
       - name: category
         label: Category
-        type: string
+        type: select
+        options:
+          values:
+            - Film
+            - Documentary
+            - Short Film
+            - Experimental
       - name: description
         label: Description
         type: text
@@ -93,9 +93,6 @@ content:
         label: Duration
         type: string
         required: false
-      - name: sortOrder
-        label: Sort order
-        type: number
       - name: video
         label: Project video
         type: file
@@ -103,12 +100,6 @@ content:
         options:
           media: videos
           categories: [video]
-      - name: poster
-        label: Poster
-        type: image
-        required: false
-        options:
-          media: images
       - name: status
         label: Status
         type: string

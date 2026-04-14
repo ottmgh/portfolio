@@ -23,5 +23,5 @@ This repo intentionally preserves the original visual output of the source files
 ## Notes
 
 - Homepage route: `/`
-- Project page route: `/pagina-lavoro-1.html`
+- Project page route: `/project.html?id=1`
 - Media paths in content should use PagesCMS-managed `/media/...` URLs

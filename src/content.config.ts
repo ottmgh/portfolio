@@ -9,11 +9,10 @@ const home = defineCollection({
     metaTitle: z.string(),
     metaDescription: z.string(),
     artistName: z.string(),
-    heroSublabel: z.string(),
-    heroVideo: z.string(),
-    heroPoster: z.string().optional(),
-    homepageProjectLabel: z.string(),
-    homepageProjectImage: z.string().optional(),
+    artistSubtitle: z.string(),
+    introVideo: z.string(),
+    skipLabel: z.string(),
+    hintText: z.string(),
     ogImage: z.string().optional()
   })
 });
@@ -21,13 +20,13 @@ const home = defineCollection({
 const projects = defineCollection({
   loader: glob({ base: './src/content/projects', pattern: '**/*.md' }),
   schema: z.object({
+    projectId: z.number().int(),
     title: z.string(),
     year: z.number().int(),
-    category: z.string(),
+    category: z.enum(['Film', 'Documentary', 'Short Film', 'Experimental']),
     description: z.string(),
     format: z.string().optional(),
     duration: z.string().optional(),
-    sortOrder: z.number().int(),
     video: z.string().optional(),
     status: z.string().optional()
   })
