@@ -1,8 +1,34 @@
 ---
-import { buildTreeData, getPortfolioContent } from '../lib/portfolio';
+import { getHomepageBranches, getPortfolioContent } from '../lib/portfolio';
 
 const { home, projects } = await getPortfolioContent();
-const treeData = buildTreeData(projects);
+const branches = getHomepageBranches(projects);
+
+function polarToCartesian(angle: number, distance: number) {
+  const radians = (angle * Math.PI) / 180;
+
+  return {
+    x: Math.round(Math.cos(radians) * distance),
+    y: Math.round(Math.sin(radians) * distance)
+  };
+}
+
+function buildChildNodes(angle: number, children: { id: string; label: string; href: string }[]) {
+  const spread = 40;
+  const distance = 120;
+  const startAngle = angle - ((children.length - 1) * spread) / 2;
+
+  return children.map((child, index) => {
+    const childAngle = startAngle + index * spread;
+
+    return {
+      ...child,
+      angle: childAngle,
+      distance,
+      ...polarToCartesian(childAngle, distance)
+    };
+  });
+}
 ---
 
 <!DOCTYPE html>
@@ -10,19 +36,25 @@ const treeData = buildTreeData(projects);
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{home.metaTitle}</title>
+    <title>{home.siteTitle}</title>
     <meta name="description" content={home.metaDescription} />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={home.siteTitle} />
-    <meta property="og:title" content={home.metaTitle} />
+    <meta property="og:title" content={home.siteTitle} />
     <meta property="og:description" content={home.metaDescription} />
     {home.ogImage && <meta property="og:image" content={home.ogImage} />}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
     <link rel="stylesheet" href="/styles/home.css" />
+    <noscript>
+      <style>
+        #video-intro { display: none !important; }
+        #tree-view { opacity: 1 !important; pointer-events: all !important; }
+      </style>
+    </noscript>
   </head>
-  <body>
-    <div id="video-last-frame"></div>
+  <body class="home-page">
+    <div id="video-last-frame" aria-hidden="true"></div>
 
     <div id="video-intro">
       <video id="intro-video" muted playsinline>
@@ -34,13 +66,65 @@ const treeData = buildTreeData(projects);
 
     <div id="tree-view">
       <div id="tree-container">
-        <svg id="tree-lines"></svg>
-
+        <div class="tree-atmosphere" aria-hidden="true">
+          {Array.from({ length: 24 }).map((_, index) => (
+            <span
+              class="particle"
+              style={`left:${(index * 17) % 100}%; animation-duration:${9 + (index % 5) * 3}s; animation-delay:${(index % 7) * 0.8}s; width:${1 + (index % 3)}px; height:${1 + (index % 3)}px;`}
+            ></span>
+          ))}
+        </div>
         <div class="root-node" id="root">
           <div class="root-pulse"></div>
           <h1>{home.artistName}</h1>
           <span class="subtitle">{home.artistSubtitle}</span>
         </div>
+
+        {branches.map((branch) => {
+          const position = polarToCartesian(branch.angle, branch.distance);
+          const branchStyle = `--branch-x:${position.x}px; --branch-y:${position.y}px; --branch-angle:${branch.angle}deg; --branch-distance:${branch.distance}px;`;
+
+          return (
+            <section class={`branch branch--${branch.type}`} data-branch={branch.id} style={branchStyle}>
+              <div class="branch-line" aria-hidden="true"></div>
+
+              {branch.type === 'category' ? (
+                <>
+                  <button
+                    type="button"
+                    class="branch-toggle"
+                    data-branch-toggle
+                    aria-controls={`${branch.id}-children`}
+                    aria-expanded="false"
+                  >
+                    <span class="branch-dot"></span>
+                    <span class="branch-label">{branch.label}</span>
+                  </button>
+
+                  <div class="branch-children" id={`${branch.id}-children`}>
+                    {buildChildNodes(branch.angle, branch.children).map((child) => (
+                      <div
+                        class="sub-branch-wrap"
+                        style={`--child-x:${child.x}px; --child-y:${child.y}px; --child-angle:${child.angle}deg; --child-distance:${child.distance}px;`}
+                      >
+                        <div class="sub-line" aria-hidden="true"></div>
+                        <a class="sub-branch" href={child.href} data-page-link>
+                          <span class="sub-dot"></span>
+                          <span class="sub-label">{child.label}</span>
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <a class="branch-link" href={branch.href} data-page-link>
+                  <span class="branch-dot"></span>
+                  <span class="branch-label">{branch.label}</span>
+                </a>
+              )}
+            </section>
+          );
+        })}
       </div>
 
       <div class="hint" id="hint-text">{home.hintText}</div>
@@ -48,7 +132,6 @@ const treeData = buildTreeData(projects);
 
     <div id="page-transition"></div>
 
-    <script id="tree-data" type="application/json" is:inline set:html={JSON.stringify(treeData)}></script>
     <script src="/scripts/home.js" is:inline></script>
   </body>
 </html>
