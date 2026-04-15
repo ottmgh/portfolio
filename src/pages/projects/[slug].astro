@@ -1,0 +1,75 @@
+---
+import { getPortfolioContent } from '../../lib/portfolio';
+
+export async function getStaticPaths() {
+  const { projects } = await getPortfolioContent();
+
+  return projects.map((project) => ({
+    params: { slug: project.data.slug },
+    props: { project }
+  }));
+}
+
+const { project } = Astro.props;
+const { home } = await getPortfolioContent();
+const pageTitle = `${project.data.title} | ${home.siteTitle}`;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={project.data.description} />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content={home.siteTitle} />
+    <meta property="og:title" content={project.data.title} />
+    <meta property="og:description" content={project.data.description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="/styles/project.css" />
+  </head>
+  <body class="detail-page detail-page--project">
+    <a href="/" class="back-link">
+      <span class="back-arrow"></span>
+      back
+    </a>
+
+    <main class="page-shell">
+      <header class="page-header">
+        <p class="eyebrow">{project.data.category}</p>
+        <h1 class="page-title">{project.data.title}</h1>
+        <p class="page-meta">{project.data.category} · {project.data.year}</p>
+      </header>
+
+      {project.data.video && (
+        <section class="video-section">
+          <div class="video-wrapper">
+            <video controls playsinline preload="metadata">
+              <source src={project.data.video} type="video/mp4" />
+            </video>
+            <div class="video-border"></div>
+          </div>
+        </section>
+      )}
+
+      <section class="page-body">
+        <div class="text-block">
+          <p class="body-copy">{project.data.description}</p>
+        </div>
+
+        <dl class="meta-list">
+          <div>
+            <dt>Category</dt>
+            <dd>{project.data.category}</dd>
+          </div>
+          <div>
+            <dt>Year</dt>
+            <dd>{project.data.year}</dd>
+          </div>
+        </dl>
+      </section>
+    </main>
+  </body>
+</html>

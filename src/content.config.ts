@@ -3,10 +3,9 @@ import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 
 const home = defineCollection({
-  loader: glob({ base: './src/content/site', pattern: '**/*.{yml,yaml}' }),
+  loader: glob({ base: './src/content/site', pattern: 'home.{yml,yaml}' }),
   schema: z.object({
     siteTitle: z.string(),
-    metaTitle: z.string(),
     metaDescription: z.string(),
     artistName: z.string(),
     artistSubtitle: z.string(),
@@ -17,19 +16,26 @@ const home = defineCollection({
   })
 });
 
-const projects = defineCollection({
-  loader: glob({ base: './src/content/projects', pattern: '**/*.md' }),
+const about = defineCollection({
+  loader: glob({ base: './src/content/site', pattern: 'about.{yml,yaml}' }),
   schema: z.object({
-    projectId: z.number().int(),
     title: z.string(),
-    year: z.number().int(),
-    category: z.enum(['Film', 'Documentary', 'Short Film', 'Experimental']),
-    description: z.string(),
-    format: z.string().optional(),
-    duration: z.string().optional(),
-    video: z.string().optional(),
-    status: z.string().optional()
+    intro: z.string(),
+    body: z.string()
   })
 });
 
-export const collections = { home, projects };
+const projects = defineCollection({
+  loader: glob({ base: './src/content/projects', pattern: '**/*.md' }),
+  schema: z.object({
+    title: z.string(),
+    slug: z.string().regex(/^[a-z0-9-]+$/, 'Slug must use lowercase letters, numbers, and hyphens'),
+    order: z.number().int(),
+    year: z.number().int(),
+    category: z.enum(['Film', 'Documentary', 'Short Film', 'Experimental']),
+    description: z.string(),
+    video: z.string().optional()
+  })
+});
+
+export const collections = { home, about, projects };

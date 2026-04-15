@@ -1,11 +1,9 @@
 ---
-projectId: 6
 title: Untitled VI
+slug: untitled-vi
+order: 6
 year: 2024
 category: Short Film
 description: Two minutes of silence. The screen breathes.
-format: 16mm
-duration: 2 min
 video: /media/videos/ott.mp4
-status: Complete
 ---

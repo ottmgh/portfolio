@@ -19,9 +19,6 @@ content:
       - name: siteTitle
         label: Site title
         type: string
-      - name: metaTitle
-        label: Meta title
-        type: string
       - name: metaDescription
         label: Meta description
         type: text
@@ -50,26 +47,46 @@ content:
         options:
           media: images
 
+  - name: about
+    label: About
+    type: file
+    path: src/content/site/about.yml
+    fields:
+      - name: title
+        label: Title
+        type: string
+      - name: intro
+        label: Intro
+        type: text
+      - name: body
+        label: Body
+        type: text
+
   - name: projects
     label: Projects
     type: collection
     path: src/content/projects
-    filename: "{primary}.md"
+    filename:
+      template: "{slug}.md"
+      field: create
     view:
-      fields: [projectId, title, year, category, status]
+      fields: [order, title, year, category]
       primary: title
-      sort: [projectId, year, title]
-      search: [title, category, description]
+      sort: [order, year, title]
+      search: [title, category]
       default:
-        sort: projectId
+        sort: order
         order: asc
     fields:
-      - name: projectId
-        label: Project ID
-        type: number
       - name: title
         label: Title
         type: string
+      - name: slug
+        label: Slug
+        type: string
+      - name: order
+        label: Order
+        type: number
       - name: year
         label: Year
         type: number
@@ -85,14 +102,6 @@ content:
       - name: description
         label: Description
         type: text
-      - name: format
-        label: Format
-        type: string
-        required: false
-      - name: duration
-        label: Duration
-        type: string
-        required: false
       - name: video
         label: Project video
         type: file
@@ -100,7 +109,3 @@ content:
         options:
           media: videos
           categories: [video]
-      - name: status
-        label: Status
-        type: string
-        required: false

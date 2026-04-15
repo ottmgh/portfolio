@@ -1,0 +1,43 @@
+---
+import { getPortfolioContent } from '../lib/portfolio';
+
+const { about, home } = await getPortfolioContent();
+const pageTitle = `${about.title} | ${home.siteTitle}`;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={about.intro} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={home.siteTitle} />
+    <meta property="og:title" content={about.title} />
+    <meta property="og:description" content={about.intro} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="/styles/project.css" />
+  </head>
+  <body class="detail-page detail-page--about">
+    <a href="/" class="back-link">
+      <span class="back-arrow"></span>
+      back
+    </a>
+
+    <main class="page-shell page-shell--about">
+      <header class="page-header">
+        <p class="eyebrow">Archive</p>
+        <h1 class="page-title">{about.title}</h1>
+        <p class="page-intro">{about.intro}</p>
+      </header>
+
+      <section class="page-body page-body--single">
+        <div class="text-block">
+          <p class="body-copy">{about.body}</p>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
