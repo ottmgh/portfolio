@@ -68,6 +68,18 @@ const graphData = JSON.stringify({ nodes: graphNodes, links: graphLinks }).repla
   bodyClass="home-page"
   ogImage={ogImage}
 >
+  <script slot="head" is:inline>
+    (() => {
+      const key = 'portfolio:intro-seen';
+
+      try {
+        if (sessionStorage.getItem(key) === 'true') {
+          document.documentElement.classList.add('intro-seen');
+        }
+      } catch {}
+    })();
+  </script>
+
   <noscript slot="head">
     <style>
       #video-intro { display: none !important; }
@@ -77,7 +89,7 @@ const graphData = JSON.stringify({ nodes: graphNodes, links: graphLinks }).repla
 
   {hasIntroVideo && (
     <div id="video-intro">
-      <video id="intro-video" muted playsinline autoplay>
+      <video id="intro-video" autoplay muted playsinline>
         <source src={home.introVideo} type="video/mp4" />
       </video>
       <button id="skip-btn">{home.skipLabel}</button>
@@ -115,7 +127,7 @@ const graphData = JSON.stringify({ nodes: graphNodes, links: graphLinks }).repla
                 <ul>
                   {branch.children.map((child) => (
                     <li>
-                      <a href={child.href}>{child.label}</a>
+                      <a href={child.href} data-astro-reload>{child.label}</a>
                     </li>
                   ))}
                 </ul>
@@ -129,8 +141,6 @@ const graphData = JSON.stringify({ nodes: graphNodes, links: graphLinks }).repla
     </div>
 
   </div>
-
-  <div id="page-transition"></div>
 
   <script src="../scripts/home.ts"></script>
 </BaseDocument>
