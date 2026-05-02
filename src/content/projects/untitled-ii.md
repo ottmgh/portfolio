@@ -1,7 +1,7 @@
 ---
 title: U Sciurlat (trailer)
 year: 2023
-category: src/content/categories/film.yml
+category: src/content/categories/short-film.yml
 featured: true
 summary: |-
   produced by Bambu Film, Il Nuovo Fantarca, Comune di Pomarico
