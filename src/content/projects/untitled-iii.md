@@ -1,10 +1,17 @@
 ---
-title: Untitled III
-year: 2023
-category: src/content/categories/film.yml
+title: Cudd iè Crist
+year: 2022
+category: src/content/categories/short-film.yml
 featured: true
-summary: Three voices intertwined across different timelines, converging at a single point of departure.
-video: https://www.youtube.com/watch?v=amH9a78STPk
+summary: |-
+  produced by GET Cinema (Accademia del Cinema Ragazzi)
+  first work (2022)
+video: https://youtu.be/pCiQeGGn558
 ---
+*Puglia Show - Festival del Cinema Europeo: official selection*  
+*Fernando di Leo Short Film Festival: Miglior Cortometraggio Pugliese | premio del pubblico *  
+*ABC School Film Festival: Finalist*  
+*Stardust Rome Film Festival: best Sirst time director*  
+*Castel Lagopesole International Short Film Festival: ofSicial selection South Italy International Film Festival: ofSicial selection*
 
-A study in narrative collapse.
+For a simple prank, Nicola is believed by the neighborhood to be a miracle worker with sacred powers.
