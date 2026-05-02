@@ -1,9 +1,9 @@
 ---
-summary: Ottavia Farchi works in the intersection of ethnographic observation
-  and transmedia experimentation, between cinema, theater, music and spaces of
-  collective resistance.
+summary: Ottavia Farchi is a director, screenwriter, videographer, and a
+  master's student in Cultural Anthropology, Ethnology, and Ethnolinguistics at
+  Ca' Foscari University of Venice.
 ---
-Ottavia Farchi is a director, screenwriter, videographer, and a master's student in Cultural Anthropology, Ethnology, and Ethnolinguistics at Ca' Foscari University of Venice. Her artistic practice focuses on the intersection of ethnographic observation and transmedia experimentation, between cinema, theater, music, and spaces of collective resistance, with a constant focus on contemporary political issues.
+Her artistic practice focuses on the intersection of ethnographic observation and transmedia experimentation, between cinema, theater, music, and spaces of collective resistance, with a constant focus on contemporary political issues.
 
 Specializing in the exploration of marginalized territories and identities, she has developed extensive experience in fiction and documentary filmmaking, acquired in international contexts and through advanced training in Italy (Venice Biennale College Cinema, Becoming Maestre Netflix and David di Donatello, Cinecittà, Centro Sperimentale di Cinematografia, Andrea Soldani), as well as technical expertise, particularly in videography and theatrical dramaturgy.
 
