@@ -53,7 +53,7 @@ const resolvedOgImage = ogImage && ogImage.length > 0 ? ogImage : null;
     <ClientRouter />
     <slot name="head" />
   </head>
-  <body class={bodyClass}>
+  <body class:list={[bodyClass, 'antialiased']}>
     <slot />
   </body>
 </html>

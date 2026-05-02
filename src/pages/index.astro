@@ -127,7 +127,7 @@ const graphData = JSON.stringify({ nodes: graphNodes, links: graphLinks }).repla
                 <ul>
                   {branch.children.map((child) => (
                     <li>
-                      <a href={child.href} data-astro-reload>{child.label}</a>
+                      <a href={child.href}>{child.label}</a>
                     </li>
                   ))}
                 </ul>

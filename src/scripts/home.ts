@@ -449,8 +449,7 @@ function buildSelections(runtime: HomeRuntime) {
         if (node.href) {
           target
             .attr('href', node.href)
-            .attr('aria-label', node.label)
-            .attr('data-astro-reload', node.type === 'project' ? '' : null);
+            .attr('aria-label', node.label);
         }
 
         target

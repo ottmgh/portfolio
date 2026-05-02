@@ -1,5 +1,6 @@
 ---
 import BaseDocument from '../../layouts/BaseDocument.astro';
+import { fade } from 'astro:transitions';
 import { getPortfolioContent } from '../../lib/portfolio';
 
 export async function getStaticPaths() {
@@ -28,34 +29,43 @@ const ProjectBody = project.Body;
 >
   <a
     href="/"
+    transition:name="back-nav"
     class="fixed top-7 left-7 z-10 inline-flex items-center gap-2 font-mono text-xs tracking-widest uppercase text-white/35 no-underline transition-colors duration-300 hover:text-white/75"
   >
     <span class="back-arrow"></span>
     back
   </a>
 
-  <main class="mx-auto max-w-6xl px-5 pt-24 pb-14 md:px-8 md:pt-28 md:pb-20">
-    <header class="mb-10 text-center">
-      <h1 class="mb-3 text-3xl font-light tracking-widest md:text-5xl">{project.title}</h1>
-      <p class="mx-auto max-w-2xl font-mono text-xs leading-relaxed tracking-widest uppercase text-white/65">{project.category.label} · {project.year}</p>
+  <main transition:animate={fade({ duration: '0.4s' })} class="mx-auto max-w-6xl px-5 pt-28 pb-16 md:px-8 md:pt-36 md:pb-24">
+    <header class="mb-12 text-center md:mb-16">
+      <p class="mb-4 font-mono text-[0.65rem] tracking-[0.30em] uppercase text-white/40 md:mb-5">{project.category.label} · {project.year}</p>
+      <h1 class="text-4xl font-light tracking-[0.22em] md:text-6xl">{project.title}</h1>
     </header>
 
     {project.video && (
-      <section class="mb-12">
+      <section class="mb-14 md:mb-16">
         <div class="relative mx-auto max-w-5xl">
           <video controls playsinline preload="metadata" class="block w-full">
             <source src={project.video} type="video/mp4" />
           </video>
-          <div class="pointer-events-none absolute -inset-px border border-white/10"></div>
+          <div class="pointer-events-none absolute -inset-px border border-white/[0.07]"></div>
         </div>
       </section>
     )}
 
     <section class="grid place-items-center">
       <div class="max-w-2xl">
-        <p class="text-lg font-light leading-loose text-white/80 md:text-xl">{project.summary}</p>
-        <ProjectBody />
+        <p class="mb-6 text-xl font-light leading-relaxed text-white/70 md:mb-8 md:text-2xl md:leading-relaxed">{project.summary}</p>
+        <div class="text-lg leading-relaxed text-white/60 space-y-6">
+          <ProjectBody />
+        </div>
       </div>
     </section>
   </main>
+
+  <script>
+    document.addEventListener('astro:page-load', () => {
+      document.querySelectorAll<HTMLVideoElement>('video[controls]').forEach((v) => v.load());
+    });
+  </script>
 </BaseDocument>
