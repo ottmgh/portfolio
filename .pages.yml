@@ -176,8 +176,7 @@ content:
             type: string
             required: true
             description: Determines the project URL (/projects/<slug>/). Lowercase letters, numbers and dashes only.
-            options:
-              pattern: "^[a-z0-9-]+$"
+            pattern: "^[a-z0-9-]+$"
           - name: year
             label: Year
             type: number
@@ -192,9 +191,9 @@ content:
             description: Defines which homepage branch the project belongs to. Categories are managed in Catalog → Categories.
             options:
               collection: categories
-              search: label
-              value: "{name}"
-              label: "{primary}"
+              search: "label,id"
+              value: "{id}"
+              label: "{label}"
           - name: featured
             label: Show on homepage tree
             type: boolean
@@ -225,14 +224,20 @@ content:
         format: yaml
         subfolders: false
         filename:
-          template: "{primary}.yml"
+          template: "{id}.yml"
           field: false
         view:
-          fields: [label]
+          fields: [id, label]
           primary: label
-          sort: [label]
-          search: [label]
+          sort: [label, id]
+          search: [label, id]
         fields:
+          - name: id
+            label: ID
+            type: string
+            required: true
+            description: Stable value saved on projects. Use lowercase letters, numbers and dashes only.
+            pattern: "^[a-z0-9-]+$"
           - name: label
             label: Label
             type: string

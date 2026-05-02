@@ -71,8 +71,24 @@ function assertUniqueCategoryLabels(categories: CategoryEntry[]) {
   }
 }
 
+function assertUniqueCategoryIds(categories: CategoryEntry[]) {
+  const seen = new Map<string, string>();
+
+  for (const category of categories) {
+    const previous = seen.get(category.data.id);
+
+    if (previous) {
+      throw new Error(
+        `Duplicate category id "${category.data.id}" in "${previous}" and "${category.id}"`
+      );
+    }
+
+    seen.set(category.data.id, category.id);
+  }
+}
+
 function assertKnownCategories(projects: ProjectEntry[], categories: CategoryEntry[]) {
-  const knownCategoryIds = new Set(categories.map((category) => category.id));
+  const knownCategoryIds = new Set(categories.map((category) => category.data.id));
 
   for (const project of projects) {
     if (!knownCategoryIds.has(project.data.category)) {
@@ -112,7 +128,7 @@ async function toPortfolioProject(
 
 function toPortfolioCategory(entry: CategoryEntry): PortfolioCategory {
   return {
-    id: entry.id,
+    id: entry.data.id,
     label: entry.data.label
   };
 }
@@ -134,6 +150,7 @@ export async function getPortfolioContent() {
   const categoryEntries = await getCollection('categories');
 
   assertUniqueSlugs(projectEntries);
+  assertUniqueCategoryIds(categoryEntries);
   assertUniqueCategoryLabels(categoryEntries);
   assertKnownCategories(projectEntries, categoryEntries);
 

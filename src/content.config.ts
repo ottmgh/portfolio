@@ -33,6 +33,7 @@ const about = defineCollection({
 const categories = defineCollection({
   loader: glob({ base: './src/content/categories', pattern: '**/*.{yml,yaml}' }),
   schema: z.object({
+    id: z.string().regex(PROJECT_SLUG_PATTERN),
     label: z.string()
   })
 });
