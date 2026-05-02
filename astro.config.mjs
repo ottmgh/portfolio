@@ -1,11 +1,15 @@
 // @ts-check
 import { defineConfig, fontProviders } from 'astro/config';
+import sitemap from '@astrojs/sitemap';
 
 import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
   output: 'static',
+  site: 'https://ottottx.win',
+  trailingSlash: 'always',
+  integrations: [sitemap()],
 
   fonts: [
     {

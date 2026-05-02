@@ -12,6 +12,9 @@ interface Props {
   ogTitle?: string;
   ogDescription?: string;
   ogImage?: string;
+  canonicalUrl?: string;
+  ogImageAlt?: string;
+  twitterCard?: 'summary_large_image' | 'summary';
 }
 
 const {
@@ -22,10 +25,18 @@ const {
   ogType = 'website',
   ogTitle = title,
   ogDescription = description,
-  ogImage
+  ogImage,
+  canonicalUrl,
+  ogImageAlt = '',
+  twitterCard = 'summary_large_image'
 } = Astro.props;
 
-const resolvedOgImage = ogImage && ogImage.length > 0 ? ogImage : null;
+const siteUrl = Astro.site ?? Astro.url;
+const resolvedCanonicalUrl = canonicalUrl
+  ? new URL(canonicalUrl, siteUrl).toString()
+  : new URL(Astro.url.pathname, siteUrl).toString();
+const resolvedOgImage =
+  ogImage && ogImage.length > 0 ? new URL(ogImage, siteUrl).toString() : null;
 ---
 
 <!DOCTYPE html>
@@ -34,12 +45,21 @@ const resolvedOgImage = ogImage && ogImage.length > 0 ? ogImage : null;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
+    <link rel="canonical" href={resolvedCanonicalUrl} />
+    <link rel="sitemap" href="/sitemap-index.xml" />
     <meta name="description" content={description} />
     <meta property="og:type" content={ogType} />
     <meta property="og:site_name" content={siteName} />
+    <meta property="og:url" content={resolvedCanonicalUrl} />
     <meta property="og:title" content={ogTitle} />
     <meta property="og:description" content={ogDescription} />
     {resolvedOgImage && <meta property="og:image" content={resolvedOgImage} />}
+    {resolvedOgImage && <meta property="og:image:alt" content={ogImageAlt} />}
+    <meta name="twitter:card" content={twitterCard} />
+    <meta name="twitter:title" content={ogTitle} />
+    <meta name="twitter:description" content={ogDescription} />
+    {resolvedOgImage && <meta name="twitter:image" content={resolvedOgImage} />}
+    {resolvedOgImage && <meta name="twitter:image:alt" content={ogImageAlt} />}
     <Font
       cssVariable="--font-cormorant-garamond"
       preload={[{ weight: 300, style: 'normal', subset: 'latin' }]}
