@@ -243,7 +243,10 @@
 .home-graph {
   position: absolute;
   inset: 0;
+  contain: layout paint;
   overflow: visible;
+  shape-rendering: geometricPrecision;
+  transform: translateZ(0);
   z-index: 6;
 }
 
@@ -259,11 +262,14 @@
   vector-effect: non-scaling-stroke;
   transition:
     opacity 0.7s var(--ease-out-still),
-    stroke 0.5s var(--ease-out-still);
+    stroke 0.5s var(--ease-out-still),
+    stroke-width 0.5s var(--ease-out-still);
+  will-change: opacity, stroke;
 }
 
 .graph-link--primary {
   stroke: rgba(255, 255, 255, 0.22);
+  stroke-width: 0.9;
 }
 
 .graph-link--child {
@@ -283,9 +289,7 @@
   cursor: pointer;
   outline: none;
   pointer-events: auto;
-  transition:
-    opacity 0.5s var(--ease-out-still),
-    filter 0.4s var(--ease-out-still);
+  transition: opacity 0.5s var(--ease-out-still);
   will-change: transform;
 }
 
@@ -300,7 +304,6 @@
   transform-origin: center;
   transition:
     fill 0.4s var(--ease-out-still),
-    filter 0.4s var(--ease-out-still),
     transform 0.4s var(--ease-out-still);
 }
 
@@ -333,7 +336,8 @@
 
 .graph-node--category.is-active .graph-count,
 .graph-node--category:hover .graph-count,
-.graph-node--category:focus-visible .graph-count {
+.graph-node--category:focus-visible .graph-count,
+.graph-node--category:focus-within .graph-count {
   fill: rgba(255, 255, 255, 0.78);
 }
 
@@ -347,8 +351,7 @@
   opacity: 1;
   pointer-events: auto;
   transition:
-    opacity 0.55s var(--ease-out-still) calc(var(--reveal-index, 0) * 70ms),
-    filter 0.4s var(--ease-out-still);
+    opacity 0.55s var(--ease-out-still) calc(var(--reveal-index, 0) * 70ms);
 }
 
 .graph-node--project .graph-dot {
@@ -365,25 +368,19 @@
 
 .graph-node--category.is-active .graph-dot {
   fill: #ffffff;
-  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.18));
-}
-
-.graph-node:hover,
-.graph-node:focus-visible,
-.graph-node.is-active {
-  filter: drop-shadow(0 0 24px rgba(255, 255, 255, 0.08));
 }
 
 .graph-node:hover .graph-dot,
 .graph-node:focus-visible .graph-dot,
+.graph-node:focus-within .graph-dot,
 .graph-node.is-active .graph-dot {
   fill: #ffffff;
-  filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.22));
   transform: scale(1.25);
 }
 
 .graph-node:hover .graph-label,
 .graph-node:focus-visible .graph-label,
+.graph-node:focus-within .graph-label,
 .graph-node.is-active .graph-label {
   fill: rgba(255, 255, 255, 0.96);
 }

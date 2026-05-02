@@ -38,10 +38,6 @@ interface GraphNode extends RawGraphNode, SimulationNodeDatum {
   anchorX?: number;
   anchorY?: number;
   anchorAngle?: number;
-  settledX?: number;
-  settledY?: number;
-  phase: number;
-  sway: number;
   revealIndex: number;
 }
 
@@ -79,7 +75,6 @@ interface HomeRuntime {
   linkSelection: LinkSelection | null;
   simulation: Simulation<GraphNode, GraphLink> | null;
   activeBranch: string | null;
-  idleRaf: number;
   resizeRaf: number;
   introFinished: boolean;
   introRemovalTimer: number;
@@ -142,7 +137,6 @@ function readHomeRuntime(): HomeRuntime | null {
     linkSelection: null,
     simulation: null,
     activeBranch: null,
-    idleRaf: 0,
     resizeRaf: 0,
     introFinished: false,
     introRemovalTimer: 0,
@@ -302,20 +296,8 @@ function seedPositions(runtime: HomeRuntime) {
   });
 }
 
-function constrainViewport(runtime: HomeRuntime, geo: Geometry) {
-  for (const node of runtime.nodes) {
-    if (node.type === 'root' || node.x === undefined || node.y === undefined) continue;
-    const r = nodeRadius(node);
-    const padX = Math.max(geo.pad, r);
-    const padY = Math.max(geo.pad, r * 0.75);
-    node.x = clamp(node.x, padX, geo.width - padX);
-    node.y = clamp(node.y, padY, geo.height - padY);
-  }
-}
-
-function render(runtime: HomeRuntime) {
+function renderNow(runtime: HomeRuntime) {
   if (!runtime.linkSelection || !runtime.nodeSelection) return;
-  constrainViewport(runtime, readGeometry(runtime));
   runtime.linkSelection
     .attr('x1', (link) => (link.source as GraphNode).x ?? 0)
     .attr('y1', (link) => (link.source as GraphNode).y ?? 0)
@@ -334,52 +316,11 @@ function updateViewport(runtime: HomeRuntime) {
   runtime.graphSvg.setAttribute('viewBox', `0 0 ${width} ${height}`);
 }
 
-function captureSettled(runtime: HomeRuntime) {
-  for (const node of runtime.nodes) {
-    node.settledX = node.x;
-    node.settledY = node.y;
-  }
-}
-
-function stopIdle(runtime: HomeRuntime) {
-  if (runtime.idleRaf) {
-    cancelAnimationFrame(runtime.idleRaf);
-    runtime.idleRaf = 0;
-  }
-}
-
-function startIdle(runtime: HomeRuntime) {
-  if (reduceMotion.matches || runtime.idleRaf) return;
-  const start = performance.now();
-  const tick = (now: number) => {
-    if (currentHome !== runtime) return;
-    const t = (now - start) * 0.001;
-    for (const node of runtime.nodes) {
-      if (node.type === 'root' || node.settledX === undefined || node.settledY === undefined) {
-        continue;
-      }
-      const phase = t + node.phase;
-      node.x = node.settledX + Math.cos(phase * 0.61) * node.sway * 2.4;
-      node.y = node.settledY + Math.sin(phase) * node.sway * 3.4;
-    }
-    render(runtime);
-    runtime.idleRaf = requestAnimationFrame(tick);
-  };
-  runtime.idleRaf = requestAnimationFrame(tick);
-}
-
 function ensureSimulation(runtime: HomeRuntime): Simulation<GraphNode, GraphLink> {
   if (runtime.simulation) return runtime.simulation;
   runtime.simulation = forceSimulation<GraphNode, GraphLink>(runtime.nodes)
-    .alphaDecay(0.05)
-    .alphaMin(0.02)
-    .velocityDecay(0.7)
     .stop()
-    .on('tick', () => render(runtime))
-    .on('end', () => {
-      captureSettled(runtime);
-      startIdle(runtime);
-    });
+    .on('tick', () => renderNow(runtime));
   return runtime.simulation;
 }
 
@@ -419,7 +360,6 @@ function configureForces(runtime: HomeRuntime, geo: Geometry) {
 }
 
 function settle(runtime: HomeRuntime, { alpha, warmupTicks }: { alpha: number; warmupTicks: number }) {
-  stopIdle(runtime);
   const geo = readGeometry(runtime);
   computeAnchors(runtime, geo);
   seedPositions(runtime);
@@ -430,15 +370,14 @@ function settle(runtime: HomeRuntime, { alpha, warmupTicks }: { alpha: number; w
       node.x = node.anchorX;
       node.y = node.anchorY;
     });
-    captureSettled(runtime);
-    render(runtime);
+    renderNow(runtime);
     return;
   }
 
   configureForces(runtime, geo);
-  sim.alpha(alpha);
+  sim.alpha(alpha).alphaTarget(0);
   if (warmupTicks > 0) sim.tick(warmupTicks);
-  render(runtime);
+  renderNow(runtime);
   sim.restart();
 }
 
@@ -531,7 +470,7 @@ function initializeGraph(runtime: HomeRuntime) {
   if (!data) return;
 
   const childIndexByParent = new Map<string, number>();
-  runtime.nodes = data.nodes.map((node, index) => {
+  runtime.nodes = data.nodes.map((node) => {
     let revealIndex = 0;
     if (node.type === 'project' && node.parentId) {
       const next = childIndexByParent.get(node.parentId) ?? 0;
@@ -540,8 +479,6 @@ function initializeGraph(runtime: HomeRuntime) {
     }
     return {
       ...node,
-      phase: index * 1.618,
-      sway: node.type === 'project' ? 0.6 : 0.45,
       revealIndex
     };
   });
@@ -572,7 +509,6 @@ function cleanupHomePage() {
 
   runtime.simulation?.stop();
   runtime.simulation = null;
-  stopIdle(runtime);
   if (runtime.resizeRaf) {
     cancelAnimationFrame(runtime.resizeRaf);
     runtime.resizeRaf = 0;
