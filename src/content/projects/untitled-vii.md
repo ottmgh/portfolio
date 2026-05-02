@@ -1,8 +1,7 @@
 ---
 title: Untitled VII
-slug: untitled-vii
 year: 2023
-category: short-film
+category: src/content/categories/short-film.yml
 featured: true
 summary: An exploration of shadow and form, where light becomes the only narrator.
 video: /media/videos/ott.mp4

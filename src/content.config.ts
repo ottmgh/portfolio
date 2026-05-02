@@ -1,7 +1,6 @@
 import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
-import { PROJECT_SLUG_PATTERN } from './lib/portfolio-model';
 
 const site = defineCollection({
   loader: glob({ base: './src/content/site', pattern: 'site.{yml,yaml}' }),
@@ -33,7 +32,6 @@ const about = defineCollection({
 const categories = defineCollection({
   loader: glob({ base: './src/content/categories', pattern: '**/*.{yml,yaml}' }),
   schema: z.object({
-    id: z.string().regex(PROJECT_SLUG_PATTERN),
     label: z.string()
   })
 });
@@ -42,7 +40,6 @@ const projects = defineCollection({
   loader: glob({ base: './src/content/projects', pattern: '**/*.md' }),
   schema: z.object({
     title: z.string(),
-    slug: z.string().regex(PROJECT_SLUG_PATTERN),
     year: z.number().int(),
     category: z.string(),
     featured: z.boolean().optional().default(true),
