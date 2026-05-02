@@ -7,6 +7,12 @@ const branches = getHomepageBranches(projects, categories);
 const ogImage = home.ogImage || site.ogImage;
 const hasIntroVideo = Boolean(home.introVideo);
 
+// Editorial subtitle — split on " · " so the second token can carry an italic accent.
+const subtitleParts = home.artistSubtitle
+  .split(/\s+·\s+/)
+  .map((part) => part.trim())
+  .filter(Boolean);
+
 type GraphNode = {
   id: string;
   type: 'root' | 'category' | 'project' | 'link';
@@ -109,7 +115,17 @@ const graphData = JSON.stringify({ nodes: graphNodes, links: graphLinks }).repla
       <div class="root-node" id="root">
         <div class="root-pulse"></div>
         <h1>{home.artistName}</h1>
-        <span class="subtitle">{home.artistSubtitle}</span>
+        <span class="subtitle">
+          {subtitleParts.length === 2 ? (
+            <>
+              <span>{subtitleParts[0]}</span>
+              <span class="subtitle-rule" aria-hidden="true"></span>
+              <span class="subtitle-accent">{subtitleParts[1]}</span>
+            </>
+          ) : (
+            home.artistSubtitle
+          )}
+        </span>
       </div>
 
       <svg class="home-graph" aria-label="Homepage navigation graph" role="navigation">

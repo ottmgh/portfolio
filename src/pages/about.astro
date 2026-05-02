@@ -20,16 +20,16 @@ const AboutBody = about.Body;
   <a
     href="/"
     transition:name="back-nav"
-    class="fixed top-7 left-7 z-10 inline-flex items-center gap-2 font-mono text-xs tracking-widest uppercase text-white/35 no-underline transition-colors duration-300 hover:text-white/75"
+    class="back-link fixed top-7 left-7 z-10 inline-flex items-center gap-2 font-mono text-[0.6rem] tracking-[0.34em] uppercase text-white/35 no-underline transition-colors duration-500 hover:text-white/80"
   >
     <span class="back-arrow"></span>
     back
   </a>
 
-  <main transition:animate={fade({ duration: '0.4s' })} class="mx-auto max-w-4xl px-5 pt-28 pb-16 md:px-8 md:pt-36 md:pb-24">
+  <main transition:animate={fade({ duration: '0.4s' })} class="mx-auto flex min-h-screen max-w-4xl flex-col justify-center px-5 py-24 md:px-8 md:py-28">
     <header class="mb-12 text-center md:mb-16">
       <h1 class="mb-4 text-4xl font-light tracking-[0.22em] md:text-6xl">About</h1>
-      <p class="mx-auto max-w-2xl text-lg leading-relaxed text-white/55 md:text-xl md:leading-relaxed">{about.summary}</p>
+      <p class="mx-auto max-w-2xl text-lg leading-relaxed text-balance text-white/70 md:text-2xl md:leading-relaxed">{about.summary}</p>
     </header>
 
     <section class="grid place-items-center">

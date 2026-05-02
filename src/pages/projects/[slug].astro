@@ -30,7 +30,7 @@ const ProjectBody = project.Body;
   <a
     href="/"
     transition:name="back-nav"
-    class="fixed top-7 left-7 z-10 inline-flex items-center gap-2 font-mono text-xs tracking-widest uppercase text-white/35 no-underline transition-colors duration-300 hover:text-white/75"
+    class="back-link fixed top-7 left-7 z-10 inline-flex items-center gap-2 font-mono text-[0.6rem] tracking-[0.34em] uppercase text-white/35 no-underline transition-colors duration-500 hover:text-white/80"
   >
     <span class="back-arrow"></span>
     back
@@ -38,7 +38,7 @@ const ProjectBody = project.Body;
 
   <main transition:animate={fade({ duration: '0.4s' })} class="mx-auto max-w-6xl px-5 pt-28 pb-16 md:px-8 md:pt-36 md:pb-24">
     <header class="mb-12 text-center md:mb-16">
-      <p class="mb-4 font-mono text-[0.65rem] tracking-[0.30em] uppercase text-white/40 md:mb-5">{project.category.label} · {project.year}</p>
+      <p class="mb-4 font-mono text-[0.6rem] tracking-[0.34em] uppercase text-white/40 md:mb-5">{project.category.label} · {project.year}</p>
       <h1 class="text-4xl font-light tracking-[0.22em] md:text-6xl">{project.title}</h1>
     </header>
 
