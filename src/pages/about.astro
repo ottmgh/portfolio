@@ -13,24 +13,26 @@ const AboutBody = about.Body;
   description={about.summary}
   siteName={site.siteTitle}
   ogTitle="About"
-  stylesheet="/styles/project.css"
   bodyClass="detail-page detail-page--about"
   ogImage={ogImage}
 >
-  <a href="/" class="back-link">
+  <a
+    href="/"
+    class="fixed top-7 left-7 z-10 inline-flex items-center gap-2 font-mono text-xs tracking-widest uppercase text-white/35 no-underline transition-colors duration-300 hover:text-white/75"
+  >
     <span class="back-arrow"></span>
     back
   </a>
 
-  <main class="page-shell page-shell--about">
-    <header class="page-header">
-      <p class="eyebrow">Archive</p>
-      <h1 class="page-title">About</h1>
-      <p class="page-intro">{about.summary}</p>
+  <main class="mx-auto max-w-4xl px-5 pt-24 pb-14 md:px-8 md:pt-28 md:pb-20">
+    <header class="mb-10 text-center">
+      <p class="mb-4 font-mono text-xs tracking-widest uppercase text-white/35">Archive</p>
+      <h1 class="mb-3 text-3xl font-light tracking-widest md:text-5xl">About</h1>
+      <p class="mx-auto max-w-2xl text-lg leading-relaxed text-white/65">{about.summary}</p>
     </header>
 
-    <section class="page-body page-body--single">
-      <div class="text-block">
+    <section class="grid place-items-center">
+      <div class="max-w-2xl">
         <AboutBody />
       </div>
     </section>
