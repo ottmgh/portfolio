@@ -2,7 +2,7 @@
 title: Untitled II
 slug: untitled-ii
 year: 2023
-category: Film
+category: film
 featured: true
 summary: An intimate portrait of stillness, captured during the golden hour of a midsummer day.
 video: /media/videos/ott.mp4

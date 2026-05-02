@@ -2,7 +2,7 @@
 title: Untitled I
 slug: untitled-i
 year: 2024
-category: Film
+category: film
 featured: true
 summary: A meditation on absence and the spaces between memory.
 video: /media/videos/ott.mp4

@@ -192,8 +192,8 @@ content:
             description: Defines which homepage branch the project belongs to. Categories are managed in Catalog → Categories.
             options:
               collection: categories
-              search: name,label
-              value: "{fields.name}"
+              search: label
+              value: "{id}"
               label: "{fields.label}"
           - name: featured
             label: Show on homepage tree
@@ -228,20 +228,13 @@ content:
           template: "{primary}.yml"
           field: false
         view:
-          fields: [label, name]
+          fields: [label]
           primary: label
           sort: [label]
-          search: [name, label]
+          search: [label]
         fields:
-          - name: name
-            label: Internal name
-            type: string
-            required: true
-            description: Stored on each project. Renaming requires updating projects that use it.
-            options:
-              maxlength: 60
           - name: label
-            label: Display label
+            label: Label
             type: string
             required: true
             description: Shown on the homepage branch.

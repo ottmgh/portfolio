@@ -29,7 +29,7 @@ Static Astro portfolio site managed with Bun, edited through Pages CMS, and depl
 - **Pages → Homepage** controls the homepage tree only (artist name and intro video).
 - **Pages → About** has a short Summary used for SEO and a rich-text Body shown on the page.
 - **Catalog → Projects** entries have a `slug` field that controls the URL (`/projects/<slug>/`). Change the slug to change the URL.
-- **Catalog → Categories** drives the homepage branches. Each category sets its own label, angle and distance from the centre. To add a new category: create one here, then assign it to a project; it will appear on the homepage automatically.
+- **Catalog → Categories** drives the homepage branches. Editors only set the visible category label; projects store a stable reference to the category file behind the scenes. To add a new category: create one here, then assign it to a project; it will appear on the homepage automatically.
 - A project shows on the homepage tree when **Show on homepage tree** is enabled. Projects are sorted by year (newest first), then alphabetically.
 - Each page can override the social-preview image; otherwise the site default is used.
 - The About branch is hardcoded into the homepage layout — it is not edited through the CMS.

@@ -11,7 +11,7 @@ export interface PortfolioProject {
   slug: string;
   href: string;
   year: number;
-  category: string;
+  category: PortfolioCategory;
   featured: boolean;
   summary: string;
   video: string;
@@ -20,7 +20,7 @@ export interface PortfolioProject {
 }
 
 export interface PortfolioCategory {
-  name: string;
+  id: string;
   label: string;
 }
 
@@ -54,11 +54,28 @@ function assertUniqueSlugs(projects: ProjectEntry[]) {
   }
 }
 
+function assertUniqueCategoryLabels(categories: CategoryEntry[]) {
+  const seen = new Map<string, string>();
+
+  for (const category of categories) {
+    const normalizedLabel = category.data.label.trim().toLocaleLowerCase();
+    const previous = seen.get(normalizedLabel);
+
+    if (previous) {
+      throw new Error(
+        `Duplicate category label "${category.data.label}" in "${previous}" and "${category.id}"`
+      );
+    }
+
+    seen.set(normalizedLabel, category.id);
+  }
+}
+
 function assertKnownCategories(projects: ProjectEntry[], categories: CategoryEntry[]) {
-  const knownCategoryNames = new Set(categories.map((category) => category.data.name));
+  const knownCategoryIds = new Set(categories.map((category) => category.id));
 
   for (const project of projects) {
-    if (!knownCategoryNames.has(project.data.category)) {
+    if (!knownCategoryIds.has(project.data.category)) {
       throw new Error(
         `Project "${project.id}" uses unknown category "${project.data.category}". ` +
           `Add it under Catalog → Categories or update the project.`
@@ -67,8 +84,16 @@ function assertKnownCategories(projects: ProjectEntry[], categories: CategoryEnt
   }
 }
 
-async function toPortfolioProject(project: ProjectEntry): Promise<PortfolioProject> {
+async function toPortfolioProject(
+  project: ProjectEntry,
+  categoriesById: Map<string, PortfolioCategory>
+): Promise<PortfolioProject> {
   const { Content } = await render(project);
+  const category = categoriesById.get(project.data.category);
+
+  if (!category) {
+    throw new Error(`Project "${project.id}" uses unknown category "${project.data.category}"`);
+  }
 
   return {
     id: project.id,
@@ -76,7 +101,7 @@ async function toPortfolioProject(project: ProjectEntry): Promise<PortfolioProje
     slug: project.data.slug,
     href: `/projects/${project.data.slug}/`,
     year: project.data.year,
-    category: project.data.category,
+    category,
     featured: project.data.featured,
     summary: project.data.summary,
     video: project.data.video,
@@ -87,9 +112,17 @@ async function toPortfolioProject(project: ProjectEntry): Promise<PortfolioProje
 
 function toPortfolioCategory(entry: CategoryEntry): PortfolioCategory {
   return {
-    name: entry.data.name,
+    id: entry.id,
     label: entry.data.label
   };
+}
+
+function toGraphId(value: string) {
+  return value
+    .trim()
+    .toLocaleLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
 export async function getPortfolioContent() {
@@ -101,16 +134,20 @@ export async function getPortfolioContent() {
   const categoryEntries = await getCollection('categories');
 
   assertUniqueSlugs(projectEntries);
+  assertUniqueCategoryLabels(categoryEntries);
   assertKnownCategories(projectEntries, categoryEntries);
 
-  const projects = await Promise.all(projectEntries.map(toPortfolioProject));
+  const categories = categoryEntries.map(toPortfolioCategory);
+  const categoriesById = new Map(categories.map((category) => [category.id, category]));
+  const projects = await Promise.all(
+    projectEntries.map((project) => toPortfolioProject(project, categoriesById))
+  );
 
   projects.sort((left, right) => {
     if (left.year !== right.year) return right.year - left.year;
     return left.title.localeCompare(right.title);
   });
 
-  const categories = categoryEntries.map(toPortfolioCategory);
   const { Content: AboutBody } = await render(aboutEntry);
 
   return {
@@ -129,11 +166,11 @@ export function getHomepageBranches(
   const featured = projects.filter((project) => project.featured);
 
   const categoryBranches = categories.map((category) => ({
-    id: `category-${category.name.toLowerCase().replace(/\s+/g, '-')}`,
+    id: `category-${toGraphId(category.id)}`,
     type: 'category' as const,
     label: category.label,
     children: featured
-      .filter((project) => project.category === category.name)
+      .filter((project) => project.category.id === category.id)
       .map((project) => ({ id: project.id, label: project.title, href: project.href }))
   }));
 
