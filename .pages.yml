@@ -4,42 +4,65 @@ media:
     input: public/media/images
     output: /media/images
     extensions: [jpg, jpeg, png, webp, svg]
+    rename: safe
   - name: videos
     label: Videos
     input: public/media/videos
     output: /media/videos
     categories: [video]
+    rename: safe
 
 content:
   - name: home
     label: Homepage
     type: file
     path: src/content/site/home.yml
+    operations:
+      delete: false
     fields:
       - name: siteTitle
         label: Site title
         type: string
+        required: true
+        options:
+          maxlength: 120
       - name: metaDescription
         label: Meta description
         type: text
+        required: true
+        options:
+          maxlength: 180
       - name: artistName
         label: Artist name
         type: string
+        required: true
+        options:
+          maxlength: 80
       - name: artistSubtitle
         label: Artist subtitle
         type: string
+        required: true
+        options:
+          maxlength: 120
       - name: introVideo
         label: Intro video
         type: file
+        required: true
         options:
           media: videos
           categories: [video]
       - name: skipLabel
         label: Skip label
         type: string
+        required: true
+        options:
+          maxlength: 40
       - name: hintText
         label: Hint text
         type: string
+        required: true
+        options:
+          maxlength: 80
       - name: ogImage
         label: Open Graph image
         type: image
@@ -51,24 +74,35 @@ content:
     label: About
     type: file
     path: src/content/site/about.yml
+    operations:
+      delete: false
     fields:
       - name: title
         label: Title
         type: string
+        required: true
+        options:
+          maxlength: 120
       - name: intro
         label: Intro
         type: text
+        required: true
+        options:
+          maxlength: 280
       - name: body
         label: Body
         type: text
+        required: true
 
   - name: projects
     label: Projects
     type: collection
     path: src/content/projects
     filename:
-      template: "{slug}.md"
+      template: "{fields.slug}.md"
       field: create
+    operations:
+      rename: false
     view:
       fields: [order, title, year, category]
       primary: title
@@ -81,18 +115,35 @@ content:
       - name: title
         label: Title
         type: string
+        required: true
+        options:
+          maxlength: 120
       - name: slug
         label: Slug
         type: string
+        required: true
+        pattern:
+          regex: "^[a-z0-9-]+$"
+          message: "Use lowercase letters, numbers, and hyphens."
+        options:
+          maxlength: 80
       - name: order
         label: Order
         type: number
+        required: true
+        options:
+          min: 1
       - name: year
         label: Year
         type: number
+        required: true
+        options:
+          min: 1900
+          max: 2100
       - name: category
         label: Category
         type: select
+        required: true
         options:
           values:
             - Film
@@ -102,6 +153,9 @@ content:
       - name: description
         label: Description
         type: text
+        required: true
+        options:
+          maxlength: 600
       - name: video
         label: Project video
         type: file
