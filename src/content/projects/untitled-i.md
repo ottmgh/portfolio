@@ -1,10 +1,30 @@
 ---
-title: Untitled I
-year: 2024
-category: src/content/categories/film.yml
+title: Bend The Spoon
+year: 2026
+category: src/content/categories/videoclip.yml
 featured: true
-summary: A meditation on absence and the spaces between memory.
-video: https://www.youtube.com/watch?v=amH9a78STPk
+summary: |-
+  by Dirty Trainload
+  Video-single ahead of the album "Rise Up and Stomp" 
+  on Ciqala Records - Side 4 Music, 2026
+  produced by Pagnotta TV
+video: https://www.youtube.com/watch?v=6Ek8Qy5m3jw
 ---
-
-Shot on 16mm across three cities, this piece explores the fragility of identity when displaced from familiar ground.
+featuring: Davide Monteleone   
+Rachel Geary   
+Dylan Geary   
+Miss Pia   
+Laura Ragone   
+Marco De Michele   
+  
+directed by Ottavia Farchi   
+direction of photography by Antonello Miglionico   
+shot by Ottavia Farchi, Antonello Miglionico   
+edited and colored by Ottavia Farchi   
+graphics, costume design by Lucia Armeno   
+set design by Lucia Armeno, Vanni Valentino   
+vfx by Gabriele Tavarilli   
+  
+special thanks to Iar Circus   
+Sabino Schingaro   
+Tv Eye, Bari
