@@ -42,6 +42,11 @@ components:
     options:
       media: videos
       categories: [video]
+  videoEmbedUrl:
+    label: Video URL
+    type: string
+    options:
+      placeholder: https://www.youtube.com/watch?v=amH9a78STPk
   bodyContent:
     label: Body
     type: rich-text
@@ -201,10 +206,10 @@ content:
             required: false
             description: Optional long-form text shown below the video.
           - name: video
-            component: videoAsset
+            component: videoEmbedUrl
             label: Project video
             required: false
-            description: Optional video shown on the project page.
+            description: Optional YouTube or Vimeo URL shown as an embedded player on the project page. Unlisted/private-share URLs are supported when the provider allows embedding.
           - name: ogImage
             component: imageAsset
             label: Social preview

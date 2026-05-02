@@ -55,12 +55,17 @@ const ProjectBody = project.Body;
       <h1 class="text-4xl font-light tracking-[0.22em] md:text-6xl">{project.title}</h1>
     </header>
 
-    {project.video && (
+    {project.videoEmbed && (
       <section class="mb-14 md:mb-16">
-        <div class="relative">
-          <video controls playsinline preload="metadata" class="block w-full">
-            <source src={project.video} type="video/mp4" />
-          </video>
+        <div class="relative aspect-video overflow-hidden bg-black">
+          <iframe
+            src={project.videoEmbed.src}
+            title={`${project.title} ${project.videoEmbed.title}`}
+            class="absolute inset-0 block h-full w-full"
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+          ></iframe>
           <div class="pointer-events-none absolute -inset-px border border-white/[0.07]"></div>
         </div>
       </section>
@@ -74,9 +79,4 @@ const ProjectBody = project.Body;
     </section>
   </main>
 
-  <script>
-    document.addEventListener('astro:page-load', () => {
-      document.querySelectorAll<HTMLVideoElement>('video[controls]').forEach((v) => v.load());
-    });
-  </script>
 </BaseDocument>
