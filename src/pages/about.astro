@@ -26,14 +26,14 @@ const AboutBody = about.Body;
     back
   </a>
 
-  <main transition:animate={fade({ duration: '0.4s' })} class="mx-auto flex min-h-screen max-w-4xl flex-col justify-center px-5 py-24 md:px-8 md:py-28">
-    <header class="mb-12 text-center md:mb-16">
+  <main transition:animate={fade({ duration: '0.4s' })} class="mx-auto flex min-h-screen max-w-2xl flex-col justify-center px-5 py-24 md:px-8 md:py-28">
+    <header class="mb-12 md:mb-16">
       <h1 class="mb-4 text-4xl font-light tracking-[0.22em] md:text-6xl">About</h1>
-      <p class="mx-auto max-w-2xl text-lg leading-relaxed text-balance text-white/70 md:text-2xl md:leading-relaxed">{about.summary}</p>
+      <p class="text-lg leading-relaxed text-balance text-white/70 md:text-2xl md:leading-relaxed">{about.summary}</p>
     </header>
 
-    <section class="grid place-items-center">
-      <div class="max-w-2xl text-lg leading-relaxed text-white/60 space-y-6">
+    <section>
+      <div class="text-lg leading-relaxed text-white/60 space-y-6">
         <AboutBody />
       </div>
     </section>
