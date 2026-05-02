@@ -1,7 +1,6 @@
 const videoIntro = document.getElementById('video-intro');
 const video = document.getElementById('intro-video');
 const skipButton = document.getElementById('skip-btn');
-const hintText = document.getElementById('hint-text');
 const pageTransition = document.getElementById('page-transition');
 const branches = Array.from(document.querySelectorAll<HTMLElement>('[data-branch]'));
 const branchButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-branch-toggle]'));
@@ -24,9 +23,6 @@ function setActiveBranch(branchId: string | null) {
     }
   });
 
-  if (hintText) {
-    hintText.classList.toggle('is-hidden', Boolean(branchId));
-  }
 }
 
 function navigateTo(url: string) {

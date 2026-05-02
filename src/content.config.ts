@@ -19,7 +19,6 @@ const home = defineCollection({
     artistSubtitle: z.string(),
     introVideo: z.string().optional().default(''),
     skipLabel: z.string(),
-    hintText: z.string(),
     ogImage: z.string().optional().default('')
   })
 });

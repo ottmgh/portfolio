@@ -119,13 +119,6 @@ content:
             description: Very short label for the intro-video skip button.
             options:
               maxlength: 40
-          - name: hintText
-            label: Homepage hint
-            type: string
-            required: true
-            description: Small helper text shown below the homepage tree.
-            options:
-              maxlength: 80
           - name: ogImage
             component: imageAsset
             label: Homepage social preview

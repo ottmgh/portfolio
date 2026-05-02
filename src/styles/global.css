@@ -337,24 +337,6 @@
   color: #ffffff;
 }
 
-.hint {
-  position: fixed;
-  left: 50%;
-  bottom: 28px;
-  transform: translateX(-50%);
-  color: rgba(255, 255, 255, 0.32);
-  font-family: var(--font-space-mono);
-  font-size: 0.56rem;
-  letter-spacing: 0.34em;
-  text-transform: uppercase;
-  transition: opacity 0.3s ease;
-  z-index: 15;
-}
-
-.hint.is-hidden {
-  opacity: 0;
-}
-
 body.js-enabled .branch-children {
   opacity: 0;
   pointer-events: none;
