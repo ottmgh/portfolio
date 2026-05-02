@@ -34,9 +34,7 @@ const categories = defineCollection({
   loader: glob({ base: './src/content/categories', pattern: '**/*.{yml,yaml}' }),
   schema: z.object({
     name: z.string(),
-    label: z.string(),
-    angle: z.number(),
-    distance: z.number()
+    label: z.string()
   })
 });
 

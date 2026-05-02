@@ -83,8 +83,7 @@
 
 /*
  * Home-page tree visualization.
- * Positions are driven by inline CSS custom properties (--branch-x, --child-angle, etc.)
- * set per-element in the Astro template, so utilities can't express them.
+ * The graph geometry is solved in src/scripts/home.ts with d3-force.
  */
 #video-intro,
 #tree-view,
@@ -171,7 +170,7 @@
   top: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
-  z-index: 4;
+  z-index: 7;
 }
 
 .root-node h1 {
@@ -203,169 +202,167 @@
   animation: tree-pulse 3s ease-in-out infinite;
 }
 
-.branch {
+.home-graph {
   position: absolute;
   inset: 0;
+  overflow: visible;
+  z-index: 6;
 }
 
-.branch-line,
-.sub-line {
-  position: absolute;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.22);
+.graph-links {
   pointer-events: none;
 }
 
-.branch-line {
-  left: 50%;
-  top: 50%;
-  width: var(--branch-distance);
-  transform: translateY(-50%) rotate(var(--branch-angle));
-  transform-origin: left center;
-}
-
-.branch-toggle,
-.branch-link {
-  position: absolute;
-  left: calc(50% + var(--branch-x));
-  top: calc(50% + var(--branch-y));
-  transform: translate(-50%, -50%);
-  border: 0;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.7rem;
-  text-decoration: none;
-  z-index: 3;
-}
-
-.branch-dot,
-.sub-dot {
-  border-radius: 50%;
+.graph-link {
+  opacity: 0;
+  stroke: rgba(255, 255, 255, 0.18);
+  stroke-linecap: round;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
   transition:
-    background 0.3s ease,
-    box-shadow 0.3s ease,
+    opacity 0.45s ease,
+    stroke 0.45s ease;
+}
+
+.graph-link--primary {
+  stroke: rgba(255, 255, 255, 0.22);
+}
+
+.graph-link--child {
+  stroke: rgba(255, 255, 255, 0.15);
+}
+
+.graph-link.is-visible {
+  opacity: 1;
+}
+
+.graph-nodes {
+  pointer-events: all;
+}
+
+.graph-node {
+  cursor: pointer;
+  outline: none;
+  pointer-events: auto;
+  transition:
+    opacity 0.45s ease,
+    filter 0.35s ease;
+  will-change: transform;
+}
+
+.graph-hit-area {
+  fill: transparent;
+  pointer-events: all;
+}
+
+.graph-dot {
+  fill: rgba(255, 255, 255, 0.72);
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    fill 0.3s ease,
+    filter 0.3s ease,
     transform 0.3s ease;
 }
 
-.branch-dot {
-  width: 7px;
-  height: 7px;
-  background: rgba(255, 255, 255, 0.72);
+.graph-label {
+  fill: rgba(255, 255, 255, 0.8);
+  dominant-baseline: hanging;
+  pointer-events: none;
+  transition: fill 0.3s ease;
+  user-select: none;
 }
 
-.branch-label {
-  color: rgba(255, 255, 255, 0.8);
+.graph-node--category .graph-label,
+.graph-node--link .graph-label {
   font-family: var(--font-space-mono);
   font-size: 0.62rem;
   letter-spacing: 0.32em;
   text-transform: uppercase;
-  white-space: nowrap;
 }
 
-.branch-toggle:hover .branch-dot,
-.branch-toggle[aria-expanded='true'] .branch-dot,
-.branch-link:hover .branch-dot {
-  background: #ffffff;
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.28);
-  transform: scale(1.15);
-}
-
-.branch-toggle:hover .branch-label,
-.branch-toggle[aria-expanded='true'] .branch-label,
-.branch-link:hover .branch-label {
-  color: #ffffff;
-}
-
-.branch-children {
-  position: absolute;
-  inset: 0;
-}
-
-.sub-branch-wrap {
-  position: absolute;
-  left: calc(50% + var(--branch-x));
-  top: calc(50% + var(--branch-y));
-}
-
-.sub-line {
-  left: 0;
-  top: 0;
-  width: var(--child-distance);
-  transform: translateY(-50%) rotate(var(--child-angle));
-  transform-origin: left center;
-}
-
-.sub-branch {
-  position: absolute;
-  left: var(--child-x);
-  top: var(--child-y);
-  transform: translate(-50%, -50%);
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.6rem;
-  text-decoration: none;
-  z-index: 3;
-}
-
-.sub-dot {
-  width: 5px;
-  height: 5px;
-  background: rgba(255, 255, 255, 0.55);
-}
-
-.sub-label {
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 0.9rem;
-  font-style: italic;
-  font-weight: 300;
-  letter-spacing: 0.12em;
-  white-space: nowrap;
-}
-
-.sub-branch:hover .sub-dot {
-  background: #ffffff;
-  box-shadow: 0 0 28px rgba(255, 255, 255, 0.26);
-  transform: scale(1.15);
-}
-
-.sub-branch:hover .sub-label {
-  color: #ffffff;
-}
-
-body.js-enabled .branch-children {
+.graph-node--project {
   opacity: 0;
   pointer-events: none;
 }
 
-body.js-enabled .branch.is-active .branch-children {
+.graph-node--project.is-visible {
   opacity: 1;
   pointer-events: auto;
 }
 
-body.js-enabled .branch-children .sub-line,
-body.js-enabled .branch-children .sub-branch {
-  opacity: 0;
-  transition:
-    opacity 0.4s ease,
-    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+.graph-node--project .graph-dot {
+  fill: rgba(255, 255, 255, 0.55);
 }
 
-body.js-enabled .branch-children .sub-branch {
-  transform: translate(-50%, -50%) scale(0.88);
+.graph-node--project .graph-label {
+  fill: rgba(255, 255, 255, 0.72);
+  font-size: 0.9rem;
+  font-style: italic;
+  font-weight: 300;
+  letter-spacing: 0.12em;
 }
 
-body.js-enabled .branch.is-active .sub-line,
-body.js-enabled .branch.is-active .sub-branch {
-  opacity: 1;
+.graph-node:hover,
+.graph-node:focus-visible,
+.graph-node.is-active {
+  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.12));
 }
 
-body.js-enabled .branch.is-active .sub-branch {
-  transform: translate(-50%, -50%) scale(1);
+.graph-node:hover .graph-dot,
+.graph-node:focus-visible .graph-dot,
+.graph-node.is-active .graph-dot {
+  fill: #ffffff;
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.28));
+  transform: scale(1.15);
+}
+
+.graph-node:hover .graph-label,
+.graph-node:focus-visible .graph-label,
+.graph-node.is-active .graph-label {
+  fill: #ffffff;
+}
+
+.home-graph-fallback {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 7rem);
+  z-index: 6;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(8rem, 1fr));
+  gap: 1.2rem 2rem;
+  width: min(34rem, calc(100vw - 3rem));
+  transform: translateX(-50%);
+}
+
+.home-graph-fallback h2,
+.home-graph-fallback a {
+  color: rgba(255, 255, 255, 0.78);
+  font-family: var(--font-space-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.home-graph-fallback ul {
+  display: grid;
+  gap: 0.45rem;
+  list-style: none;
+  margin-top: 0.65rem;
+  padding: 0;
+}
+
+.home-graph-fallback li a {
+  font-family: var(--font-cormorant-garamond);
+  font-size: 0.94rem;
+  font-style: italic;
+  letter-spacing: 0.08em;
+  text-transform: none;
+}
+
+body.js-enabled .home-graph-fallback {
+  display: none;
 }
 
 #page-transition {
@@ -381,23 +378,38 @@ body.js-enabled .branch.is-active .sub-branch {
 }
 
 @media (max-width: 900px) {
-  #tree-container {
-    transform: scale(0.82);
-  }
-
   #skip-btn {
     right: 20px;
     bottom: 20px;
   }
+
 }
 
 @media (max-width: 640px) {
-  #tree-container {
-    transform: scale(0.64);
-  }
-
   .root-node h1 {
     font-size: 2rem;
     letter-spacing: 0.18em;
+  }
+
+  .root-node .subtitle {
+    max-width: 14rem;
+    letter-spacing: 0.22em;
+    line-height: 1.5;
+  }
+
+  .graph-node--category .graph-label,
+  .graph-node--link .graph-label {
+    font-size: 0.58rem;
+    letter-spacing: 0.22em;
+  }
+
+  .graph-node--project .graph-label {
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+  }
+
+  .home-graph-fallback {
+    grid-template-columns: 1fr;
+    top: calc(50% + 6rem);
   }
 }

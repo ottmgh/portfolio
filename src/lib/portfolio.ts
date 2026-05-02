@@ -22,8 +22,6 @@ export interface PortfolioProject {
 export interface PortfolioCategory {
   name: string;
   label: string;
-  angle: number;
-  distance: number;
 }
 
 function requireEntry<T>(entry: T | undefined, name: string, path: string): T {
@@ -90,9 +88,7 @@ async function toPortfolioProject(project: ProjectEntry): Promise<PortfolioProje
 function toPortfolioCategory(entry: CategoryEntry): PortfolioCategory {
   return {
     name: entry.data.name,
-    label: entry.data.label,
-    angle: entry.data.angle,
-    distance: entry.data.distance
+    label: entry.data.label
   };
 }
 
@@ -136,8 +132,6 @@ export function getHomepageBranches(
     id: `category-${category.name.toLowerCase().replace(/\s+/g, '-')}`,
     type: 'category' as const,
     label: category.label,
-    angle: category.angle,
-    distance: category.distance,
     children: featured
       .filter((project) => project.category === category.name)
       .map((project) => ({ id: project.id, label: project.title, href: project.href }))
@@ -149,8 +143,6 @@ export function getHomepageBranches(
       id: ABOUT_BRANCH.id,
       type: 'link' as const,
       label: ABOUT_BRANCH.label,
-      angle: ABOUT_BRANCH.angle,
-      distance: ABOUT_BRANCH.distance,
       href: ABOUT_BRANCH.href
     }
   ];
