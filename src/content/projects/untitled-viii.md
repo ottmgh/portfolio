@@ -1,8 +1,7 @@
 ---
 title: Untitled VIII
-slug: untitled-viii
 year: 2024
-category: experimental
+category: src/content/categories/experimental.yml
 featured: true
 summary: Found footage reassembled into a new grammar.
 video: /media/videos/ott.mp4

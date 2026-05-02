@@ -1,8 +1,7 @@
 ---
 title: Untitled VI
-slug: untitled-vi
 year: 2024
-category: short-film
+category: src/content/categories/short-film.yml
 featured: true
 summary: Two minutes of silence.
 video: /media/videos/ott.mp4

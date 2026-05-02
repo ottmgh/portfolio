@@ -32,25 +32,36 @@ function requireEntry<T>(entry: T | undefined, name: string, path: string): T {
   return entry;
 }
 
+const CATEGORY_COLLECTION_PATH = 'src/content/categories';
+
+function getProjectSlug(project: ProjectEntry) {
+  return project.id;
+}
+
+function getCategoryReference(category: CategoryEntry) {
+  return `${CATEGORY_COLLECTION_PATH}/${category.id}.yml`;
+}
+
 function assertUniqueSlugs(projects: ProjectEntry[]) {
   const seen = new Map<string, string>();
 
   for (const project of projects) {
-    const previous = seen.get(project.data.slug);
+    const slug = getProjectSlug(project);
+    const previous = seen.get(slug);
 
     if (previous) {
       throw new Error(
-        `Duplicate project slug "${project.data.slug}" in "${previous}" and "${project.id}"`
+        `Duplicate project slug "${slug}" in "${previous}" and "${project.id}"`
       );
     }
 
-    if (!PROJECT_SLUG_PATTERN.test(project.data.slug)) {
+    if (!PROJECT_SLUG_PATTERN.test(slug)) {
       throw new Error(
-        `Project "${project.id}" has invalid slug "${project.data.slug}" — use lowercase letters, numbers, and dashes only`
+        `Project "${project.id}" has invalid filename-derived slug "${slug}" — use lowercase letters, numbers, and dashes only`
       );
     }
 
-    seen.set(project.data.slug, project.id);
+    seen.set(slug, project.id);
   }
 }
 
@@ -58,6 +69,12 @@ function assertUniqueCategoryLabels(categories: CategoryEntry[]) {
   const seen = new Map<string, string>();
 
   for (const category of categories) {
+    if (!PROJECT_SLUG_PATTERN.test(category.id)) {
+      throw new Error(
+        `Category "${category.id}" has invalid filename-derived id — use lowercase letters, numbers, and dashes only`
+      );
+    }
+
     const normalizedLabel = category.data.label.trim().toLocaleLowerCase();
     const previous = seen.get(normalizedLabel);
 
@@ -72,10 +89,10 @@ function assertUniqueCategoryLabels(categories: CategoryEntry[]) {
 }
 
 function assertKnownCategories(projects: ProjectEntry[], categories: CategoryEntry[]) {
-  const knownCategoryIds = new Set(categories.map((category) => category.id));
+  const knownCategoryReferences = new Set(categories.map(getCategoryReference));
 
   for (const project of projects) {
-    if (!knownCategoryIds.has(project.data.category)) {
+    if (!knownCategoryReferences.has(project.data.category)) {
       throw new Error(
         `Project "${project.id}" uses unknown category "${project.data.category}". ` +
           `Add it under Catalog → Categories or update the project.`
@@ -86,10 +103,11 @@ function assertKnownCategories(projects: ProjectEntry[], categories: CategoryEnt
 
 async function toPortfolioProject(
   project: ProjectEntry,
-  categoriesById: Map<string, PortfolioCategory>
+  categoriesByReference: Map<string, PortfolioCategory>
 ): Promise<PortfolioProject> {
   const { Content } = await render(project);
-  const category = categoriesById.get(project.data.category);
+  const slug = getProjectSlug(project);
+  const category = categoriesByReference.get(project.data.category);
 
   if (!category) {
     throw new Error(`Project "${project.id}" uses unknown category "${project.data.category}"`);
@@ -98,8 +116,8 @@ async function toPortfolioProject(
   return {
     id: project.id,
     title: project.data.title,
-    slug: project.data.slug,
-    href: `/projects/${project.data.slug}/`,
+    slug,
+    href: `/projects/${slug}/`,
     year: project.data.year,
     category,
     featured: project.data.featured,
@@ -138,9 +156,11 @@ export async function getPortfolioContent() {
   assertKnownCategories(projectEntries, categoryEntries);
 
   const categories = categoryEntries.map(toPortfolioCategory);
-  const categoriesById = new Map(categories.map((category) => [category.id, category]));
+  const categoriesByReference = new Map(
+    categoryEntries.map((category) => [getCategoryReference(category), toPortfolioCategory(category)])
+  );
   const projects = await Promise.all(
-    projectEntries.map((project) => toPortfolioProject(project, categoriesById))
+    projectEntries.map((project) => toPortfolioProject(project, categoriesByReference))
   );
 
   projects.sort((left, right) => {

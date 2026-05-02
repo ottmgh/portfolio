@@ -159,7 +159,7 @@ content:
           fields: [title, year, category, featured]
           primary: title
           sort: [year, title, featured]
-          search: [title, summary, slug]
+          search: [title, summary]
           default:
             sort: year
             order: desc
@@ -171,13 +171,6 @@ content:
             description: Project page heading. Used to generate the file name when first created.
             options:
               maxlength: 120
-          - name: slug
-            label: URL slug
-            type: string
-            required: true
-            description: Determines the project URL (/projects/<slug>/). Lowercase letters, numbers and dashes only.
-            options:
-              pattern: "^[a-z0-9-]+$"
           - name: year
             label: Year
             type: number
@@ -193,8 +186,8 @@ content:
             options:
               collection: categories
               search: label
-              value: "{id}"
-              label: "{label}"
+              value: "{path}"
+              label: "{primary}"
           - name: featured
             label: Show on homepage tree
             type: boolean
