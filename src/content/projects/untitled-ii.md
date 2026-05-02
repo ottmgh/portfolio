@@ -1,6 +1,6 @@
 ---
 title: U Sciurlat (trailer)
-year: 2023
+year: 2026
 category: src/content/categories/short-film.yml
 featured: true
 summary: |-
