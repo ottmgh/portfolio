@@ -194,7 +194,7 @@ content:
               collection: categories
               search: label
               value: "{id}"
-              label: "{fields.label}"
+              label: "{label}"
           - name: featured
             label: Show on homepage tree
             type: boolean
