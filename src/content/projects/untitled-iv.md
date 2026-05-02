@@ -1,10 +1,16 @@
 ---
-title: Untitled IV
-year: 2024
-category: src/content/categories/documentary.yml
+title: Pettirosso
+year: 2026
+category: src/content/categories/videoclip.yml
 featured: true
-summary: Following the daily rituals of a vanishing trade in the hills of Southern Italy.
-video: https://www.youtube.com/watch?v=amH9a78STPk
+summary: |-
+  by Pastel
+  new single from the new album "A Lovers Manifesto"
+  bandcamp: https://pasteldiy.bandcamp.com/
+video: https://youtu.be/erbOTihjluw?si=Bkyk_GpJ2MbKlwE1
 ---
-
-No narration, no interference. Just presence.
+produced by Pagnotta TV   
+directed by Ottavia Farchi, Sabino Schingaro   
+shot by Ottavia Farchi  
+edited by Ottavia Farchi  
+costume by Lucia Armeno 
