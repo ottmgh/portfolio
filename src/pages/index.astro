@@ -7,31 +7,58 @@ const branches = getHomepageBranches(projects, categories);
 const ogImage = home.ogImage || site.ogImage;
 const hasIntroVideo = Boolean(home.introVideo);
 
-function polarToCartesian(angle: number, distance: number) {
-  const radians = (angle * Math.PI) / 180;
+type GraphNode = {
+  id: string;
+  type: 'root' | 'category' | 'project' | 'link';
+  label: string;
+  href?: string;
+  parentId?: string;
+  childCount?: number;
+};
 
-  return {
-    x: Math.round(Math.cos(radians) * distance),
-    y: Math.round(Math.sin(radians) * distance)
-  };
+type GraphLink = {
+  source: string;
+  target: string;
+  type: 'primary' | 'child';
+};
+
+const graphNodes: GraphNode[] = [{ id: 'root', type: 'root', label: home.artistName }];
+const graphLinks: GraphLink[] = [];
+
+for (const branch of branches) {
+  if (branch.type === 'category') {
+    graphNodes.push({
+      id: branch.id,
+      type: 'category',
+      label: branch.label,
+      childCount: branch.children.length
+    });
+    graphLinks.push({ source: 'root', target: branch.id, type: 'primary' });
+
+    for (const child of branch.children) {
+      graphNodes.push({
+        id: child.id,
+        type: 'project',
+        label: child.label,
+        href: child.href,
+        parentId: branch.id
+      });
+      graphLinks.push({
+        source: branch.id,
+        target: child.id,
+        type: 'child'
+      });
+    }
+  } else {
+    graphNodes.push({ id: branch.id, type: 'link', label: branch.label, href: branch.href });
+    graphLinks.push({ source: 'root', target: branch.id, type: 'primary' });
+  }
 }
 
-function buildChildNodes(angle: number, children: { id: string; label: string; href: string }[]) {
-  const spread = 40;
-  const distance = 120;
-  const startAngle = angle - ((children.length - 1) * spread) / 2;
-
-  return children.map((child, index) => {
-    const childAngle = startAngle + index * spread;
-
-    return {
-      ...child,
-      angle: childAngle,
-      distance,
-      ...polarToCartesian(childAngle, distance)
-    };
-  });
-}
+const graphData = JSON.stringify({ nodes: graphNodes, links: graphLinks }).replace(
+  /</g,
+  '\\u003c'
+);
 ---
 
 <BaseDocument
@@ -73,51 +100,32 @@ function buildChildNodes(angle: number, children: { id: string; label: string; h
         <span class="subtitle">{home.artistSubtitle}</span>
       </div>
 
-      {branches.map((branch) => {
-        const position = polarToCartesian(branch.angle, branch.distance);
-        const branchStyle = `--branch-x:${position.x}px; --branch-y:${position.y}px; --branch-angle:${branch.angle}deg; --branch-distance:${branch.distance}px;`;
+      <svg class="home-graph" aria-label="Homepage navigation graph" role="navigation">
+        <g class="graph-links" aria-hidden="true"></g>
+        <g class="graph-nodes"></g>
+      </svg>
+      <script id="home-graph-data" type="application/json" set:html={graphData} is:inline></script>
 
-        return (
-          <section class={`branch branch--${branch.type}`} data-branch={branch.id} style={branchStyle}>
-            <div class="branch-line" aria-hidden="true"></div>
-
+      <nav class="home-graph-fallback" aria-label="Homepage navigation">
+        {branches.map((branch) => (
+          <section>
             {branch.type === 'category' ? (
               <>
-                <button
-                  type="button"
-                  class="branch-toggle"
-                  data-branch-toggle
-                  aria-controls={`${branch.id}-children`}
-                  aria-expanded="false"
-                >
-                  <span class="branch-dot"></span>
-                  <span class="branch-label">{branch.label}</span>
-                </button>
-
-                <div class="branch-children" id={`${branch.id}-children`}>
-                  {buildChildNodes(branch.angle, branch.children).map((child) => (
-                    <div
-                      class="sub-branch-wrap"
-                      style={`--child-x:${child.x}px; --child-y:${child.y}px; --child-angle:${child.angle}deg; --child-distance:${child.distance}px;`}
-                    >
-                      <div class="sub-line" aria-hidden="true"></div>
-                      <a class="sub-branch" href={child.href} data-page-link>
-                        <span class="sub-dot"></span>
-                        <span class="sub-label">{child.label}</span>
-                      </a>
-                    </div>
+                <h2>{branch.label}</h2>
+                <ul>
+                  {branch.children.map((child) => (
+                    <li>
+                      <a href={child.href}>{child.label}</a>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </>
             ) : (
-              <a class="branch-link" href={branch.href} data-page-link>
-                <span class="branch-dot"></span>
-                <span class="branch-label">{branch.label}</span>
-              </a>
+              <a href={branch.href}>{branch.label}</a>
             )}
           </section>
-        );
-      })}
+        ))}
+      </nav>
     </div>
 
   </div>

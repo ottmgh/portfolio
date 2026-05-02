@@ -228,7 +228,7 @@ content:
           template: "{primary}.yml"
           field: false
         view:
-          fields: [label, name, angle, distance]
+          fields: [label, name]
           primary: label
           sort: [label]
           search: [name, label]
@@ -247,16 +247,3 @@ content:
             description: Shown on the homepage branch.
             options:
               maxlength: 60
-          - name: angle
-            label: Branch angle (degrees)
-            type: number
-            required: true
-            description: Position on the homepage tree. 0 points right, -90 points up, 90 points down.
-          - name: distance
-            label: Branch distance (px)
-            type: number
-            required: true
-            description: How far the branch sits from the centre of the tree.
-            options:
-              min: 100
-              max: 400
