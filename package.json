@@ -15,14 +15,14 @@
     "deploy": "bun run build && wrangler deploy"
   },
   "dependencies": {
-    "astro": "^6.1.6"
+    "astro": "^6.2.1"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.8",
-    "typescript": "^5.9.3",
-    "wrangler": "^4.82.2"
+    "@astrojs/check": "^0.9.9",
+    "typescript": "^6.0.3",
+    "wrangler": "^4.87.0"
   },
   "overrides": {
-    "vite": "^7"
+    "vite": "^7.3.2"
   }
 }
