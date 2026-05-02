@@ -1,10 +1,10 @@
 ---
-title: Untitled VII
-year: 2023
+title: Ci arriveranno anche loro
+year: 2025
 category: src/content/categories/short-film.yml
 featured: true
-summary: An exploration of shadow and form, where light becomes the only narrator.
-video: https://www.youtube.com/watch?v=amH9a78STPk
+summary: shot on Xiaomi 13
+video: https://youtu.be/wWwcjJ6LTT0
 ---
-
-Shot in a single take at dawn.
+shot by Ottavia Farchi  
+sound design by Sabino Schingaro
