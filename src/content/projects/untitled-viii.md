@@ -1,8 +1,11 @@
 ---
 title: Untitled VIII
-order: 8
+slug: untitled-viii
 year: 2024
 category: Experimental
-description: Found footage reassembled into a new grammar. Images stripped of their original context become something else entirely.
+featured: true
+summary: Found footage reassembled into a new grammar.
 video: /media/videos/ott.mp4
 ---
+
+Images stripped of their original context become something else entirely.

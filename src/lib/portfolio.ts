@@ -1,161 +1,157 @@
-import { getCollection, getEntry } from 'astro:content';
-import { PROJECT_CATEGORIES, PROJECT_SLUG_PATTERN, type ProjectCategory, isProjectCategory } from './portfolio-model';
+import { getCollection, getEntry, render } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import { ABOUT_BRANCH, PROJECT_SLUG_PATTERN } from './portfolio-model';
 
-const CATEGORY_BRANCHES = [
-  { id: 'films', label: 'Films', angle: -60, distance: 180, category: 'Film' },
-  { id: 'docs', label: 'Documentaries', angle: 0, distance: 200, category: 'Documentary' },
-  { id: 'shorts', label: 'Short Films', angle: 60, distance: 180, category: 'Short Film' },
-  { id: 'experimental', label: 'Experimental', angle: 140, distance: 190, category: 'Experimental' }
-] as const;
-
-const ABOUT_BRANCH = {
-  id: 'about',
-  label: 'About',
-  angle: -140,
-  distance: 170,
-  href: '/about/'
-} as const;
-
-async function loadProjects() {
-  return getCollection('projects');
-}
-
-type ProjectEntries = Awaited<ReturnType<typeof loadProjects>>;
-type ProjectEntry = ProjectEntries[number];
+type ProjectEntry = CollectionEntry<'projects'>;
+type CategoryEntry = CollectionEntry<'categories'>;
 
 export interface PortfolioProject {
   id: string;
   title: string;
   slug: string;
   href: string;
-  order: number;
   year: number;
-  category: ProjectCategory;
-  description: string;
-  video?: string;
+  category: string;
+  featured: boolean;
+  summary: string;
+  video: string;
+  ogImage: string;
+  Body: Awaited<ReturnType<typeof render>>['Content'];
 }
 
-function createEmptyProjectGroups() {
-  return PROJECT_CATEGORIES.reduce(
-    (groups, category) => {
-      groups[category] = [];
-      return groups;
-    },
-    {} as Record<ProjectCategory, PortfolioProject[]>
-  );
+export interface PortfolioCategory {
+  name: string;
+  label: string;
+  angle: number;
+  distance: number;
 }
 
-function requireEntry<T>(
-  entry: T | undefined,
-  collectionName: string,
-  filePath: string
-) {
+function requireEntry<T>(entry: T | undefined, name: string, path: string): T {
   if (!entry) {
-    throw new Error(`Missing required ${collectionName} content entry in ${filePath}`);
+    throw new Error(`Missing required content entry "${name}" at ${path}`);
   }
 
   return entry;
 }
 
-function validateUniqueProjects<T>(
-  projects: ProjectEntries,
-  label: string,
-  getValue: (project: ProjectEntry) => T
-) {
+function assertUniqueSlugs(projects: ProjectEntry[]) {
   const seen = new Map<string, string>();
 
   for (const project of projects) {
-    const value = String(getValue(project));
-    const previous = seen.get(value);
+    const previous = seen.get(project.data.slug);
 
     if (previous) {
-      throw new Error(`Duplicate project ${label} "${value}" in "${previous}" and "${project.id}"`);
+      throw new Error(
+        `Duplicate project slug "${project.data.slug}" in "${previous}" and "${project.id}"`
+      );
     }
 
-    seen.set(value, project.id);
+    if (!PROJECT_SLUG_PATTERN.test(project.data.slug)) {
+      throw new Error(
+        `Project "${project.id}" has invalid slug "${project.data.slug}" — use lowercase letters, numbers, and dashes only`
+      );
+    }
+
+    seen.set(project.data.slug, project.id);
   }
 }
 
-function validateProjects(projects: ProjectEntries) {
-  validateUniqueProjects(projects, 'order', (project) => project.data.order);
-  validateUniqueProjects(projects, 'slug', getProjectSlug);
+function assertKnownCategories(projects: ProjectEntry[], categories: CategoryEntry[]) {
+  const knownCategoryNames = new Set(categories.map((category) => category.data.name));
 
   for (const project of projects) {
-    if (!isProjectCategory(project.data.category)) {
-      throw new Error(`Unsupported category "${project.data.category}" in "${project.id}"`);
-    }
-
-    const slug = getProjectSlug(project);
-    if (!PROJECT_SLUG_PATTERN.test(slug)) {
-      throw new Error(`Project filename "${project.id}" must resolve to a lowercase URL slug`);
+    if (!knownCategoryNames.has(project.data.category)) {
+      throw new Error(
+        `Project "${project.id}" uses unknown category "${project.data.category}". ` +
+          `Add it under Catalog → Categories or update the project.`
+      );
     }
   }
 }
 
-function getProjectSlug(project: ProjectEntry) {
-  return project.id.split('/').pop()?.replace(/\.[^.]+$/, '') ?? project.id;
-}
-
-function toPortfolioProject(project: ProjectEntry): PortfolioProject {
-  const slug = getProjectSlug(project);
+async function toPortfolioProject(project: ProjectEntry): Promise<PortfolioProject> {
+  const { Content } = await render(project);
 
   return {
     id: project.id,
     title: project.data.title,
-    slug,
-    href: `/projects/${slug}/`,
-    order: project.data.order,
+    slug: project.data.slug,
+    href: `/projects/${project.data.slug}/`,
     year: project.data.year,
     category: project.data.category,
-    description: project.data.description,
-    video: project.data.video
+    featured: project.data.featured,
+    summary: project.data.summary,
+    video: project.data.video,
+    ogImage: project.data.ogImage,
+    Body: Content
+  };
+}
+
+function toPortfolioCategory(entry: CategoryEntry): PortfolioCategory {
+  return {
+    name: entry.data.name,
+    label: entry.data.label,
+    angle: entry.data.angle,
+    distance: entry.data.distance
   };
 }
 
 export async function getPortfolioContent() {
+  const siteEntry = requireEntry(await getEntry('site', 'site'), 'site', 'src/content/site/site.yml');
   const homeEntry = requireEntry(await getEntry('home', 'home'), 'home', 'src/content/site/home.yml');
-  const aboutEntry = requireEntry(
-    await getEntry('about', 'about'),
-    'about',
-    'src/content/site/about.yml'
-  );
-  const projectEntries = await loadProjects();
+  const aboutEntry = requireEntry(await getEntry('about', 'about'), 'about', 'src/content/site/about.md');
 
-  validateProjects(projectEntries);
+  const projectEntries = await getCollection('projects');
+  const categoryEntries = await getCollection('categories');
+
+  assertUniqueSlugs(projectEntries);
+  assertKnownCategories(projectEntries, categoryEntries);
+
+  const projects = await Promise.all(projectEntries.map(toPortfolioProject));
+
+  projects.sort((left, right) => {
+    if (left.year !== right.year) return right.year - left.year;
+    return left.title.localeCompare(right.title);
+  });
+
+  const categories = categoryEntries.map(toPortfolioCategory);
+  const { Content: AboutBody } = await render(aboutEntry);
 
   return {
+    site: siteEntry.data,
     home: homeEntry.data,
-    about: aboutEntry.data,
-    projects: projectEntries
-      .map(toPortfolioProject)
-      .sort((left, right) => left.order - right.order)
+    about: { ...aboutEntry.data, Body: AboutBody },
+    projects,
+    categories
   };
 }
 
 export function getHomepageBranches(
-  projects: Awaited<ReturnType<typeof getPortfolioContent>>['projects']
+  projects: PortfolioProject[],
+  categories: PortfolioCategory[]
 ) {
-  const groupedProjects = projects.reduce<Record<ProjectCategory, typeof projects>>(
-    (groups, project) => {
-      groups[project.category].push(project);
-      return groups;
-    },
-    createEmptyProjectGroups()
-  );
+  const featured = projects.filter((project) => project.featured);
+
+  const categoryBranches = categories.map((category) => ({
+    id: `category-${category.name.toLowerCase().replace(/\s+/g, '-')}`,
+    type: 'category' as const,
+    label: category.label,
+    angle: category.angle,
+    distance: category.distance,
+    children: featured
+      .filter((project) => project.category === category.name)
+      .map((project) => ({ id: project.id, label: project.title, href: project.href }))
+  }));
 
   return [
-    ...CATEGORY_BRANCHES.map((branch) => ({
-      ...branch,
-      type: 'category' as const,
-      children: (groupedProjects[branch.category] ?? []).map((project) => ({
-        id: project.id,
-        label: project.title,
-        href: project.href
-      }))
-    })),
+    ...categoryBranches,
     {
-      ...ABOUT_BRANCH,
-      type: 'link' as const
+      id: ABOUT_BRANCH.id,
+      type: 'link' as const,
+      label: ABOUT_BRANCH.label,
+      angle: ABOUT_BRANCH.angle,
+      distance: ABOUT_BRANCH.distance,
+      href: ABOUT_BRANCH.href
     }
   ];
 }

@@ -3,26 +3,29 @@ import BaseDocument from '../../layouts/BaseDocument.astro';
 import { getPortfolioContent } from '../../lib/portfolio';
 
 export async function getStaticPaths() {
-  const { home, projects } = await getPortfolioContent();
+  const { site, projects } = await getPortfolioContent();
 
   return projects.map((project) => ({
     params: { slug: project.slug },
-    props: { home, project }
+    props: { site, project }
   }));
 }
 
-const { home, project } = Astro.props;
-const pageTitle = `${project.title} | ${home.siteTitle}`;
+const { site, project } = Astro.props;
+const pageTitle = `${project.title} | ${site.siteTitle}`;
+const ogImage = project.ogImage || site.ogImage;
+const ProjectBody = project.Body;
 ---
 
 <BaseDocument
   title={pageTitle}
-  description={project.description}
-  siteName={home.siteTitle}
+  description={project.summary}
+  siteName={site.siteTitle}
   ogType="article"
   ogTitle={project.title}
   stylesheet="/styles/project.css"
   bodyClass="detail-page detail-page--project"
+  ogImage={ogImage}
 >
   <a href="/" class="back-link">
     <span class="back-arrow"></span>
@@ -49,7 +52,8 @@ const pageTitle = `${project.title} | ${home.siteTitle}`;
 
     <section class="page-body">
       <div class="text-block">
-        <p class="body-copy">{project.description}</p>
+        <p class="body-copy">{project.summary}</p>
+        <ProjectBody />
       </div>
 
       <dl class="meta-list">

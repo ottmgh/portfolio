@@ -12,26 +12,32 @@ Static Astro portfolio site managed with Bun, edited through Pages CMS, and depl
 - `bun run deploy`
 - `bun run astro ...`
 
-## Content
+## Content layout
 
-- Homepage settings: `src/content/site/home.yml`
-- About page settings: `src/content/site/about.yml`
-- Project entries: `src/content/projects/*.md`
-- PagesCMS config: `.pages.yml`
-- Public media: `public/media`
+| Pages CMS section | File on disk | What it is |
+| --- | --- | --- |
+| Site settings → Site | `src/content/site/site.yml` | Site title, default meta description, default social-preview image |
+| Pages → Homepage | `src/content/site/home.yml` | Artist name, intro video, hints, homepage-only social preview |
+| Pages → About | `src/content/site/about.md` | About page summary + body (Markdown) |
+| Catalog → Projects | `src/content/projects/*.md` | One Markdown file per project (frontmatter + body) |
+| Catalog → Categories | `src/content/categories/*.yml` | One YAML file per category that appears on the homepage tree |
+| Public media | `public/media/images`, `public/media/videos` | Uploads from Pages CMS |
 
-## Editing with Pages CMS
+## Editing notes
 
-- Use **Pages** for homepage and about-page copy.
-- Use **Work > Projects** for portfolio entries.
-- Project URLs are generated from the Markdown filename. Pages CMS creates that filename from the project title when the entry is first created.
-- Keep project display order values unique. Lower numbers appear first.
-- Upload/select media through the Pages CMS media library so content stores `/media/...` URLs.
+- **Site settings** edits the values used across every page (browser title, fallback meta description, fallback OG image).
+- **Pages → Homepage** controls the homepage tree only (artist name, intro video, hint text).
+- **Pages → About** has a short Summary used for SEO and a rich-text Body shown on the page.
+- **Catalog → Projects** entries have a `slug` field that controls the URL (`/projects/<slug>/`). Change the slug to change the URL.
+- **Catalog → Categories** drives the homepage branches. Each category sets its own label, angle and distance from the centre. To add a new category: create one here, then assign it to a project; it will appear on the homepage automatically.
+- A project shows on the homepage tree when **Show on homepage tree** is enabled. Projects are sorted by year (newest first), then alphabetically.
+- Each page can override the social-preview image; otherwise the site default is used.
+- The About branch is hardcoded into the homepage layout — it is not edited through the CMS.
 
-## Notes
+## Routes
 
-- Homepage route: `/`
-- About route: `/about/`
-- Project page route: `/projects/untitled-i/`
-- Media paths in content should use Pages CMS-managed `/media/...` URLs
-- Cloudflare deploys the generated `dist/` directory as static assets via `wrangler deploy`
+- `/` — homepage tree
+- `/about/` — About page
+- `/projects/<slug>/` — one page per project, slug taken from the project's `slug` field
+
+Cloudflare deploys the generated `dist/` directory as static assets via `wrangler deploy`.

@@ -2,8 +2,10 @@
 import BaseDocument from '../layouts/BaseDocument.astro';
 import { getHomepageBranches, getPortfolioContent } from '../lib/portfolio';
 
-const { home, projects } = await getPortfolioContent();
-const branches = getHomepageBranches(projects);
+const { site, home, projects, categories } = await getPortfolioContent();
+const branches = getHomepageBranches(projects, categories);
+const ogImage = home.ogImage || site.ogImage;
+const hasIntroVideo = Boolean(home.introVideo);
 
 function polarToCartesian(angle: number, distance: number) {
   const radians = (angle * Math.PI) / 180;
@@ -33,12 +35,12 @@ function buildChildNodes(angle: number, children: { id: string; label: string; h
 ---
 
 <BaseDocument
-  title={home.siteTitle}
-  description={home.metaDescription}
-  siteName={home.siteTitle}
+  title={site.siteTitle}
+  description={site.siteDescription}
+  siteName={site.siteTitle}
   stylesheet="/styles/home.css"
   bodyClass="home-page"
-  ogImage={home.ogImage}
+  ogImage={ogImage}
 >
   <noscript slot="head">
     <style>
@@ -47,12 +49,14 @@ function buildChildNodes(angle: number, children: { id: string; label: string; h
     </style>
   </noscript>
 
-  <div id="video-intro">
-    <video id="intro-video" muted playsinline autoplay>
-      <source src={home.introVideo} type="video/mp4" />
-    </video>
-    <button id="skip-btn">{home.skipLabel}</button>
-  </div>
+  {hasIntroVideo && (
+    <div id="video-intro">
+      <video id="intro-video" muted playsinline autoplay>
+        <source src={home.introVideo} type="video/mp4" />
+      </video>
+      <button id="skip-btn">{home.skipLabel}</button>
+    </div>
+  )}
 
   <div id="tree-view">
     <div id="tree-container">

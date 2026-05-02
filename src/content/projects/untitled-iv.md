@@ -1,8 +1,11 @@
 ---
 title: Untitled IV
-order: 4
+slug: untitled-iv
 year: 2024
 category: Documentary
-description: Following the daily rituals of a vanishing trade in the hills of Southern Italy. No narration, no interference. Just presence.
+featured: true
+summary: Following the daily rituals of a vanishing trade in the hills of Southern Italy.
 video: /media/videos/ott.mp4
 ---
+
+No narration, no interference. Just presence.

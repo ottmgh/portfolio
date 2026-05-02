@@ -22,6 +22,8 @@ const {
   ogDescription = description,
   ogImage
 } = Astro.props;
+
+const resolvedOgImage = ogImage && ogImage.length > 0 ? ogImage : null;
 ---
 
 <!DOCTYPE html>
@@ -35,7 +37,7 @@ const {
     <meta property="og:site_name" content={siteName} />
     <meta property="og:title" content={ogTitle} />
     <meta property="og:description" content={ogDescription} />
-    {ogImage && <meta property="og:image" content={ogImage} />}
+    {resolvedOgImage && <meta property="og:image" content={resolvedOgImage} />}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
     <link rel="stylesheet" href={stylesheet} />

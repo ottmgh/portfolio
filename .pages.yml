@@ -3,7 +3,7 @@ media:
     label: Image library
     input: public/media/images
     output: /media/images
-    extensions: [jpg, jpeg, png, webp, svg]
+    categories: [image]
     rename: safe
   - name: videos
     label: Video library
@@ -25,25 +25,61 @@ settings:
 
 components:
   seoDescription:
-    label: SEO description
+    label: Summary
     type: text
     required: true
-    description: Used in search results and social previews. Keep it clear and under 180 characters.
+    description: Short description used at the top of the page and in search and social previews. Keep it under 180 characters.
     options:
       maxlength: 180
+  imageAsset:
+    label: Image
+    type: image
+    options:
+      media: images
   videoAsset:
     label: Video
     type: file
     options:
       media: videos
       categories: [video]
-  imageAsset:
-    label: Image
-    type: image
+  bodyContent:
+    label: Body
+    type: rich-text
     options:
+      format: markdown
       media: images
 
 content:
+  - name: settings
+    label: Site settings
+    type: group
+    items:
+      - name: site
+        label: Site
+        type: file
+        path: src/content/site/site.yml
+        operations:
+          create: false
+          rename: false
+          delete: false
+        fields:
+          - name: siteTitle
+            label: Site title
+            type: string
+            required: true
+            description: Browser title fallback and the site name shown in social previews.
+            options:
+              maxlength: 120
+          - name: siteDescription
+            component: seoDescription
+            label: Default site description
+            description: Used as the meta description on any page that does not have its own summary.
+          - name: ogImage
+            component: imageAsset
+            label: Default social preview
+            required: false
+            description: Default image used when pages are shared. Individual pages can override it.
+
   - name: pages
     label: Pages
     type: group
@@ -57,20 +93,11 @@ content:
           rename: false
           delete: false
         fields:
-          - name: siteTitle
-            label: Site title
-            type: string
-            required: true
-            description: Browser title and site name used in previews.
-            options:
-              maxlength: 120
-          - name: metaDescription
-            component: seoDescription
           - name: artistName
             label: Artist name
             type: string
             required: true
-            description: Main name shown in the center of the homepage.
+            description: Main name shown in the centre of the homepage.
             options:
               maxlength: 80
           - name: artistSubtitle
@@ -83,8 +110,8 @@ content:
           - name: introVideo
             component: videoAsset
             label: Intro video
-            required: true
-            description: Autoplay video shown before the homepage tree.
+            required: false
+            description: Optional autoplay video shown before the homepage tree. Leave empty to skip the intro.
           - name: skipLabel
             label: Skip button label
             type: string
@@ -101,75 +128,63 @@ content:
               maxlength: 80
           - name: ogImage
             component: imageAsset
-            label: Social preview image
+            label: Homepage social preview
             required: false
-            description: Optional image used when the homepage is shared.
+            description: Optional. Overrides the default site preview when the homepage is shared.
 
       - name: about
         label: About
         type: file
-        path: src/content/site/about.yml
+        path: src/content/site/about.md
+        format: yaml-frontmatter
         operations:
           create: false
           rename: false
           delete: false
         fields:
-          - name: title
-            label: Page title
-            type: string
-            required: true
-            options:
-              maxlength: 120
-          - name: intro
-            label: Intro
-            type: text
-            required: true
-            description: Short summary used at the top of the page and for metadata.
-            options:
-              maxlength: 280
+          - name: summary
+            component: seoDescription
+            description: Short text shown at the top of the About page and used as the meta description.
           - name: body
-            label: Body
-            type: text
-            required: true
-            description: Main About page text.
+            component: bodyContent
+            description: Main About page text. Supports headings, links, and lists.
 
-  - name: work
-    label: Work
+  - name: catalog
+    label: Catalog
     type: group
     items:
       - name: projects
         label: Projects
         type: collection
         path: src/content/projects
+        format: yaml-frontmatter
         subfolders: false
         filename:
           template: "{primary}.md"
           field: false
-        operations:
-          rename: false
         view:
-          fields: [order, title, year, category]
+          fields: [title, year, category, featured]
           primary: title
-          sort: [order, year, title]
-          search: [title, description, category]
+          sort: [year, title, featured]
+          search: [title, summary, slug]
           default:
-            sort: order
-            order: asc
+            sort: year
+            order: desc
         fields:
           - name: title
             label: Title
             type: string
             required: true
-            description: Used as the project page heading and to generate the URL when creating a new project.
+            description: Project page heading. Used to generate the file name when first created.
             options:
               maxlength: 120
-          - name: order
-            label: Display order
-            type: number
+          - name: slug
+            label: URL slug
+            type: string
             required: true
-            description: Lower numbers appear first in the homepage tree and project list.
+            description: Determines the project URL (/projects/<slug>/). Lowercase letters, numbers and dashes only.
             options:
-              min: 1
+              pattern: "^[a-z0-9-]+$"
           - name: year
             label: Year
             type: number
@@ -179,24 +194,76 @@ content:
               max: 2100
           - name: category
             label: Category
-            type: select
+            type: reference
             required: true
-            description: Controls which homepage branch contains the project.
+            description: Defines which homepage branch the project belongs to. Categories are managed in Catalog → Categories.
             options:
-              values:
-                - Film
-                - Documentary
-                - Short Film
-                - Experimental
-          - name: description
-            label: Description
-            type: text
-            required: true
-            description: Used on the project page and as the page summary.
-            options:
-              maxlength: 600
+              collection: categories
+              search: name,label
+              value: "{fields.name}"
+              label: "{fields.label}"
+          - name: featured
+            label: Show on homepage tree
+            type: boolean
+            default: true
+            description: When enabled, the project appears under its category on the homepage.
+          - name: summary
+            component: seoDescription
+            description: Single-sentence description shown at the top of the project page and in social previews.
+          - name: body
+            component: bodyContent
+            required: false
+            description: Optional long-form text shown below the video.
           - name: video
             component: videoAsset
             label: Project video
             required: false
-            description: Optional video shown on the project detail page.
+            description: Optional video shown on the project page.
+          - name: ogImage
+            component: imageAsset
+            label: Social preview
+            required: false
+            description: Optional. Overrides the default site preview when this project is shared.
+
+      - name: categories
+        label: Categories
+        type: collection
+        path: src/content/categories
+        format: yaml
+        subfolders: false
+        filename:
+          template: "{primary}.yml"
+          field: false
+        view:
+          fields: [label, name, angle, distance]
+          primary: label
+          sort: [label]
+          search: [name, label]
+        fields:
+          - name: name
+            label: Internal name
+            type: string
+            required: true
+            description: Stored on each project. Renaming requires updating projects that use it.
+            options:
+              maxlength: 60
+          - name: label
+            label: Display label
+            type: string
+            required: true
+            description: Shown on the homepage branch.
+            options:
+              maxlength: 60
+          - name: angle
+            label: Branch angle (degrees)
+            type: number
+            required: true
+            description: Position on the homepage tree. 0 points right, -90 points up, 90 points down.
+          - name: distance
+            label: Branch distance (px)
+            type: number
+            required: true
+            description: How far the branch sits from the centre of the tree.
+            options:
+              min: 100
+              max: 400
