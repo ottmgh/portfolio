@@ -1,4 +1,4 @@
-import { getCollection } from 'astro:content';
+import { getCollection, getEntry } from 'astro:content';
 
 const PROJECT_CATEGORIES = ['Film', 'Documentary', 'Short Film', 'Experimental'] as const;
 
@@ -23,20 +23,16 @@ async function loadProjects() {
 
 type ProjectEntries = Awaited<ReturnType<typeof loadProjects>>;
 
-function requireSingleEntry<T>(
-  entries: T[],
+function requireEntry<T>(
+  entry: T | undefined,
   collectionName: string,
   filePath: string
 ) {
-  if (entries.length === 0) {
+  if (!entry) {
     throw new Error(`Missing required ${collectionName} content entry in ${filePath}`);
   }
 
-  if (entries.length > 1) {
-    throw new Error(`Expected exactly one ${collectionName} content entry in ${filePath}`);
-  }
-
-  return entries[0];
+  return entry;
 }
 
 function validateUniqueProjects(
@@ -76,9 +72,9 @@ function validateProjects(projects: ProjectEntries) {
 }
 
 export async function getPortfolioContent() {
-  const homeEntry = requireSingleEntry(await getCollection('home'), 'home', 'src/content/site/home.yml');
-  const aboutEntry = requireSingleEntry(
-    await getCollection('about'),
+  const homeEntry = requireEntry(await getEntry('home', 'home'), 'home', 'src/content/site/home.yml');
+  const aboutEntry = requireEntry(
+    await getEntry('about', 'about'),
     'about',
     'src/content/site/about.yml'
   );
