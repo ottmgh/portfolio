@@ -1,5 +1,4 @@
 import {
-  forceCenter,
   forceCollide,
   forceLink,
   forceManyBody,
@@ -15,7 +14,7 @@ import { select, type Selection } from 'd3-selection';
 type GraphNodeType = 'root' | 'category' | 'project' | 'link';
 type GraphLinkType = 'primary' | 'child';
 
-interface HomeGraphNode {
+interface RawGraphNode {
   id: string;
   type: GraphNodeType;
   label: string;
@@ -24,442 +23,393 @@ interface HomeGraphNode {
   childCount?: number;
 }
 
-interface HomeGraphLink {
+interface RawGraphLink {
   source: string;
   target: string;
   type: GraphLinkType;
 }
 
-interface HomeGraphData {
-  nodes: HomeGraphNode[];
-  links: HomeGraphLink[];
+interface RawGraphData {
+  nodes: RawGraphNode[];
+  links: RawGraphLink[];
 }
 
-interface GraphNodeDatum extends HomeGraphNode, SimulationNodeDatum {
+interface GraphNode extends RawGraphNode, SimulationNodeDatum {
   anchorX?: number;
   anchorY?: number;
-  phase?: number;
-  sway?: number;
-  settleX?: number;
-  settleY?: number;
+  anchorAngle?: number;
+  // Settled position captured when the layout finishes — used as the centre
+  // around which the idle sway oscillates.
+  settledX?: number;
+  settledY?: number;
+  phase: number;
+  sway: number;
 }
 
-interface GraphLinkDatum extends SimulationLinkDatum<GraphNodeDatum> {
+interface GraphLink extends SimulationLinkDatum<GraphNode> {
   type: GraphLinkType;
 }
 
-type NodeSelection = Selection<SVGGElement, GraphNodeDatum, SVGGElement, unknown>;
-type LinkSelection = Selection<SVGLineElement, GraphLinkDatum, SVGGElement, unknown>;
+type NodeSelection = Selection<SVGGElement, GraphNode, SVGGElement, unknown>;
+type LinkSelection = Selection<SVGLineElement, GraphLink, SVGGElement, unknown>;
 
-const videoIntro = document.getElementById('video-intro');
-const video = document.getElementById('intro-video');
-const skipButton = document.getElementById('skip-btn');
-const pageTransition = document.getElementById('page-transition');
-const treeContainer = document.getElementById('tree-container');
-const graphSvg = document.querySelector<SVGSVGElement>('.home-graph');
-const graphDataElement = document.getElementById('home-graph-data');
-const pageLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-page-link]'));
+interface Geometry {
+  width: number;
+  height: number;
+  cx: number;
+  cy: number;
+  compact: boolean;
+  horizontalRadius: number;
+  verticalRadius: number;
+  childRadius: number;
+  primaryDistance: number;
+  childDistance: number;
+  pad: number;
+}
+
+const $videoIntro = document.getElementById('video-intro');
+const $video = document.getElementById('intro-video');
+const $skipButton = document.getElementById('skip-btn');
+const $pageTransition = document.getElementById('page-transition');
+const $treeContainer = document.getElementById('tree-container');
+const $graphSvg = document.querySelector<SVGSVGElement>('.home-graph');
+const $graphData = document.getElementById('home-graph-data');
+const $pageLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-page-link]'));
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-let activeBranchId: string | null = null;
-let introFinished = false;
-let simulation: Simulation<GraphNodeDatum, GraphLinkDatum> | null = null;
-let graphNodes: GraphNodeDatum[] = [];
-let graphLinks: GraphLinkDatum[] = [];
-let linkSelection: LinkSelection | null = null;
+let nodes: GraphNode[] = [];
+let links: GraphLink[] = [];
 let nodeSelection: NodeSelection | null = null;
-let tickCount = 0;
+let linkSelection: LinkSelection | null = null;
+let simulation: Simulation<GraphNode, GraphLink> | null = null;
+let activeBranch: string | null = null;
+let idleRaf = 0;
+let resizeRaf = 0;
+let introFinished = false;
+const viewport = { width: 0, height: 0 };
 
-function parseGraphData(): HomeGraphData | null {
-  if (!graphDataElement?.textContent) {
-    return null;
-  }
+const clamp = (value: number, lo: number, hi: number) =>
+  value < lo ? lo : value > hi ? hi : value;
 
-  try {
-    return JSON.parse(graphDataElement.textContent) as HomeGraphData;
-  } catch {
-    return null;
-  }
-}
+const refId = (ref: GraphLink['source'] | GraphLink['target'] | undefined): string =>
+  typeof ref === 'object' ? ref?.id ?? '' : String(ref ?? '');
 
-function getNodeId(node: string | number | GraphNodeDatum | undefined) {
-  if (typeof node === 'string' || typeof node === 'number') {
-    return String(node);
-  }
-
-  return node?.id;
-}
-
-function getNodeDatum(node: string | number | GraphNodeDatum | undefined) {
-  return typeof node === 'object' ? node : undefined;
-}
-
-function navigateTo(url: string) {
-  pageTransition?.classList.add('active');
-
-  window.setTimeout(() => {
-    window.location.href = url;
-  }, 800);
-}
-
-function handleGraphNavigation(event: MouseEvent, href: string, target?: string | null) {
-  const isModifiedClick =
-    event.metaKey ||
-    event.ctrlKey ||
-    event.shiftKey ||
-    event.altKey ||
-    event.button !== 0;
-
-  if (isModifiedClick || target === '_blank') {
-    return;
-  }
-
-  event.preventDefault();
-  navigateTo(href);
-}
-
-function finishIntro() {
-  if (introFinished) {
-    return;
-  }
-
-  introFinished = true;
-  videoIntro?.classList.add('is-finished');
-
-  window.setTimeout(() => {
-    videoIntro?.remove();
-
-    if (video instanceof HTMLVideoElement) {
-      video.pause();
-    }
-  }, 1600);
-}
-
-function radiusFor(node: GraphNodeDatum) {
-  const labelRadius = Math.min(92, Math.max(34, node.label.length * 4.2));
-
+function nodeRadius(node: GraphNode): number {
+  const labelRadius = clamp(node.label.length * 4.2, 34, 92);
   if (node.type === 'root') return 128;
   if (node.type === 'category') return labelRadius + 24;
   if (node.type === 'link') return labelRadius + 18;
   return labelRadius + 14;
 }
 
-function dotRadiusFor(node: GraphNodeDatum) {
-  if (node.type === 'project') return 2.5;
-  return 3.5;
+const dotRadius = (node: GraphNode) => (node.type === 'project' ? 2.5 : 3.5);
+const hitWidth = (node: GraphNode) =>
+  clamp(node.label.length * (node.type === 'project' ? 8.5 : 7.4) + 28, 64, 220);
+const hitHeight = (node: GraphNode) => (node.type === 'project' ? 48 : 52);
+const labelOffset = (node: GraphNode) => (node.type === 'project' ? 22 : 24);
+
+function readGeometry(): Geometry {
+  const { width, height } = viewport;
+  const compact = width < 680;
+  return {
+    width,
+    height,
+    compact,
+    cx: width / 2,
+    cy: height / 2,
+    horizontalRadius: clamp(width * 0.32, 165, 275),
+    verticalRadius: clamp(height * 0.27, 125, 225),
+    childRadius: clamp(width * 0.12, 88, 125),
+    primaryDistance: clamp(width * 0.21, 130, compact ? 180 : 225),
+    childDistance: clamp(width * 0.115, 72, compact ? 108 : 132),
+    pad: clamp(width * 0.07, 34, 72)
+  };
 }
 
-function hitWidthFor(node: GraphNodeDatum) {
-  const characterWidth = node.type === 'project' ? 8.5 : 7.4;
-  return Math.max(64, Math.min(220, node.label.length * characterWidth + 28));
+function parseGraphData(): RawGraphData | null {
+  const json = $graphData?.textContent?.trim();
+  if (!json) return null;
+  try {
+    return JSON.parse(json) as RawGraphData;
+  } catch {
+    return null;
+  }
 }
 
-function hitHeightFor(node: GraphNodeDatum) {
-  return node.type === 'project' ? 48 : 52;
+function navigateTo(url: string) {
+  $pageTransition?.classList.add('active');
+  window.setTimeout(() => {
+    window.location.href = url;
+  }, 800);
+}
+
+function isPlainClick(event: MouseEvent) {
+  return (
+    !event.metaKey &&
+    !event.ctrlKey &&
+    !event.shiftKey &&
+    !event.altKey &&
+    event.button === 0
+  );
+}
+
+function handleNavigate(event: MouseEvent, href: string, target?: string | null) {
+  if (!isPlainClick(event) || target === '_blank') return;
+  event.preventDefault();
+  navigateTo(href);
+}
+
+function finishIntro() {
+  if (introFinished) return;
+  introFinished = true;
+  $videoIntro?.classList.add('is-finished');
+  window.setTimeout(() => {
+    $videoIntro?.remove();
+    if ($video instanceof HTMLVideoElement) $video.pause();
+  }, 1600);
 }
 
 function setActiveBranch(branchId: string | null) {
-  activeBranchId = branchId;
-
+  activeBranch = branchId;
   nodeSelection
     ?.classed('is-active', (node) => node.type === 'category' && node.id === branchId)
     .classed('is-visible', (node) => node.type !== 'project' || node.parentId === branchId)
     .attr('aria-expanded', (node) =>
       node.type === 'category' ? String(node.id === branchId) : null
     );
-
-  linkSelection?.classed('is-visible', (link) => {
-    if (link.type === 'primary') {
-      return true;
-    }
-
-    const sourceId = getNodeId(link.source);
-    const targetId = getNodeId(link.target);
-
-    return (
-      sourceId === branchId ||
-      graphNodes.some((node) => node.id === targetId && node.parentId === branchId)
-    );
-  });
+  linkSelection?.classed(
+    'is-visible',
+    (link) => link.type === 'primary' || refId(link.source) === branchId
+  );
 }
 
-function applyAnchors(width: number, height: number) {
-  const mainNodes = graphNodes.filter((node) => node.type === 'category' || node.type === 'link');
-  const horizontalRadius = Math.max(165, Math.min(width * 0.32, 275));
-  const verticalRadius = Math.max(125, Math.min(height * 0.27, 225));
-  const fallbackAngles = [-65, 8, 78, 145, 215];
-
-  mainNodes.forEach((node, index) => {
-    const angle = ((fallbackAngles[index] ?? -65 + index * 72) * Math.PI) / 180;
-    node.anchorX = width / 2 + Math.cos(angle) * horizontalRadius;
-    node.anchorY = height / 2 + Math.sin(angle) * verticalRadius;
-
-    node.x ??= node.anchorX;
-    node.y ??= node.anchorY;
+function computeAnchors(geo: Geometry) {
+  const primaries = nodes.filter((n) => n.type === 'category' || n.type === 'link');
+  const startAngle = -Math.PI * 0.36;
+  primaries.forEach((node, index) => {
+    const angle = startAngle + (index / primaries.length) * Math.PI * 2;
+    node.anchorAngle = angle;
+    node.anchorX = geo.cx + Math.cos(angle) * geo.horizontalRadius;
+    node.anchorY = geo.cy + Math.sin(angle) * geo.verticalRadius;
   });
 
-  graphNodes
-    .filter((node) => node.type === 'project')
-    .forEach((node, index) => {
-      const parent = graphNodes.find((candidate) => candidate.id === node.parentId);
-      const siblings = graphNodes.filter((candidate) => candidate.parentId === node.parentId);
-      const siblingIndex = siblings.findIndex((candidate) => candidate.id === node.id);
-      const parentAngle = parent
-        ? Math.atan2(
-            (parent.anchorY ?? height / 2) - height / 2,
-            (parent.anchorX ?? width / 2) - width / 2
-          )
-        : 0;
-      const angle = parentAngle + (siblingIndex - (siblings.length - 1) / 2) * 0.34;
-      const distance = Math.max(88, Math.min(125, width * 0.12));
-
-      node.anchorX = (parent?.anchorX ?? width / 2) + Math.cos(angle) * distance;
-      node.anchorY = (parent?.anchorY ?? height / 2) + Math.sin(angle) * distance;
-
-      node.x ??= node.anchorX + (index % 2 === 0 ? 8 : -8);
-      node.y ??= node.anchorY + (index % 3 - 1) * 8;
+  const groups = new Map<string, GraphNode[]>();
+  for (const node of nodes) {
+    if (node.type !== 'project' || !node.parentId) continue;
+    const list = groups.get(node.parentId);
+    if (list) list.push(node);
+    else groups.set(node.parentId, [node]);
+  }
+  for (const [parentId, siblings] of groups) {
+    const parent = nodes.find((n) => n.id === parentId);
+    if (!parent) continue;
+    const parentAngle = parent.anchorAngle ?? 0;
+    siblings.forEach((node, index) => {
+      const spread = (index - (siblings.length - 1) / 2) * 0.34;
+      const angle = parentAngle + spread;
+      node.anchorX = (parent.anchorX ?? geo.cx) + Math.cos(angle) * geo.childRadius;
+      node.anchorY = (parent.anchorY ?? geo.cy) + Math.sin(angle) * geo.childRadius;
     });
+  }
+
+  const root = nodes.find((n) => n.type === 'root');
+  if (root) {
+    root.anchorX = geo.cx;
+    root.anchorY = geo.cy;
+    root.fx = geo.cx;
+    root.fy = geo.cy;
+  }
 }
 
-function seedNodePositions() {
-  graphNodes.forEach((node, index) => {
-    if (node.anchorX === undefined || node.anchorY === undefined) {
-      return;
-    }
-
-    if (node.type === 'root') {
-      node.x = node.anchorX;
-      node.y = node.anchorY;
-    } else {
-      const offset = node.type === 'project' ? 5 : 8;
-      node.x = node.anchorX + Math.cos((node.phase ?? index) * 1.7) * offset;
-      node.y = node.anchorY + Math.sin((node.phase ?? index) * 1.3) * offset;
-    }
-
+function seedPositions() {
+  nodes.forEach((node, index) => {
+    if (node.x !== undefined && node.y !== undefined) return;
+    const offset = node.type === 'project' ? 5 : 8;
+    node.x = (node.anchorX ?? 0) + Math.cos(index * 1.7) * offset;
+    node.y = (node.anchorY ?? 0) + Math.sin(index * 1.3) * offset;
     node.vx = 0;
     node.vy = 0;
   });
 }
 
-function createSoftIdleForce() {
-  let nodes: GraphNodeDatum[] = [];
-
-  function force() {
-    if (reduceMotion.matches) {
-      return;
-    }
-
-    tickCount += 1;
-
-    for (const node of nodes) {
-      if (node.type === 'root' || node.settleX === undefined || node.settleY === undefined) {
-        continue;
-      }
-
-      const phase = tickCount * 0.012 + (node.phase ?? 0);
-      const distance = node.sway ?? 1;
-      const targetX = node.settleX + Math.cos(phase * 0.61) * distance * 2.4;
-      const targetY = node.settleY + Math.sin(phase) * distance * 3.4;
-
-      node.vx = (node.vx ?? 0) + (targetX - (node.x ?? targetX)) * 0.008;
-      node.vy = (node.vy ?? 0) + (targetY - (node.y ?? targetY)) * 0.008;
-    }
+function constrainViewport(geo: Geometry) {
+  for (const node of nodes) {
+    if (node.type === 'root' || node.x === undefined || node.y === undefined) continue;
+    const r = nodeRadius(node);
+    const padX = Math.max(geo.pad, r);
+    const padY = Math.max(geo.pad, r * 0.75);
+    node.x = clamp(node.x, padX, geo.width - padX);
+    node.y = clamp(node.y, padY, geo.height - padY);
   }
-
-  force.initialize = (nextNodes: GraphNodeDatum[]) => {
-    nodes = nextNodes;
-  };
-
-  return force;
 }
 
-function constrainNodes(width: number, height: number) {
-  const padding = Math.max(34, Math.min(72, width * 0.07));
-
-  graphNodes.forEach((node) => {
-    if (node.type === 'root') {
-      node.x = width / 2;
-      node.y = height / 2;
-      return;
-    }
-
-    const nodeRadius = radiusFor(node);
-    const horizontalPadding = Math.max(padding, nodeRadius);
-    const verticalPadding = Math.max(padding, nodeRadius * 0.75);
-
-    node.x = Math.min(width - horizontalPadding, Math.max(horizontalPadding, node.x ?? width / 2));
-    node.y = Math.min(height - verticalPadding, Math.max(verticalPadding, node.y ?? height / 2));
-  });
-}
-
-function renderGraph() {
-  if (!treeContainer || !graphSvg) {
-    return;
-  }
-
-  const { width, height } = treeContainer.getBoundingClientRect();
-  graphSvg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-  constrainNodes(width, height);
-
+function render() {
+  if (!linkSelection || !nodeSelection) return;
+  constrainViewport(readGeometry());
   linkSelection
-    ?.attr('x1', (link) => String(getNodeDatum(link.source)?.x ?? width / 2))
-    .attr('y1', (link) => String(getNodeDatum(link.source)?.y ?? height / 2))
-    .attr('x2', (link) => String(getNodeDatum(link.target)?.x ?? width / 2))
-    .attr('y2', (link) => String(getNodeDatum(link.target)?.y ?? height / 2));
-
-  nodeSelection?.attr(
+    .attr('x1', (link) => (link.source as GraphNode).x ?? 0)
+    .attr('y1', (link) => (link.source as GraphNode).y ?? 0)
+    .attr('x2', (link) => (link.target as GraphNode).x ?? 0)
+    .attr('y2', (link) => (link.target as GraphNode).y ?? 0);
+  nodeSelection.attr(
     'transform',
-    (node) => `translate(${Math.round(node.x ?? width / 2)},${Math.round(node.y ?? height / 2)})`
+    (node) => `translate(${node.x ?? 0},${node.y ?? 0})`
   );
 }
 
-function restartSimulation() {
-  if (!treeContainer || !simulation) {
-    return;
+function updateViewport() {
+  if (!$treeContainer || !$graphSvg) return;
+  const { width, height } = $treeContainer.getBoundingClientRect();
+  viewport.width = width;
+  viewport.height = height;
+  $graphSvg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+}
+
+function ensureSimulation(): Simulation<GraphNode, GraphLink> {
+  if (simulation) return simulation;
+  simulation = forceSimulation<GraphNode, GraphLink>(nodes)
+    .alphaDecay(0.05)
+    .alphaMin(0.02)
+    .velocityDecay(0.7)
+    .stop()
+    .on('tick', render)
+    .on('end', () => {
+      captureSettled();
+      startIdle();
+    });
+  return simulation;
+}
+
+function captureSettled() {
+  for (const node of nodes) {
+    node.settledX = node.x;
+    node.settledY = node.y;
   }
+}
 
-  const { width, height } = treeContainer.getBoundingClientRect();
-  const compact = width < 680;
-  const primaryDistance = Math.max(130, Math.min(compact ? 180 : 225, width * 0.21));
-  const childDistance = Math.max(72, Math.min(compact ? 108 : 132, width * 0.115));
-
-  applyAnchors(width, height);
-
-  const root = graphNodes.find((node) => node.type === 'root');
-  if (root) {
-    root.anchorX = width / 2;
-    root.anchorY = height / 2;
-    root.fx = width / 2;
-    root.fy = height / 2;
-  }
-
-  const needsInitialSeed = graphNodes.some((node) => node.x === undefined || node.y === undefined);
-  if (needsInitialSeed) {
-    seedNodePositions();
-    renderGraph();
-  }
-
+function configureForces(geo: Geometry) {
+  if (!simulation) return;
   simulation
     .force(
       'link',
-      forceLink<GraphNodeDatum, GraphLinkDatum>(graphLinks)
+      forceLink<GraphNode, GraphLink>(links)
         .id((node) => node.id)
-        .distance((link) => (link.type === 'primary' ? primaryDistance : childDistance))
+        .distance((link) =>
+          link.type === 'primary' ? geo.primaryDistance : geo.childDistance
+        )
         .strength((link) => (link.type === 'primary' ? 0.9 : 0.78))
         .iterations(3)
     )
     .force(
       'charge',
-      forceManyBody<GraphNodeDatum>().strength((node) => (node.type === 'root' ? -520 : -75))
+      forceManyBody<GraphNode>().strength((node) => (node.type === 'root' ? -520 : -75))
     )
-    .force('collide', forceCollide<GraphNodeDatum>().radius(radiusFor).strength(0.82).iterations(2))
-    .force('center', forceCenter(width / 2, height / 2).strength(0.04))
+    .force(
+      'collide',
+      forceCollide<GraphNode>().radius(nodeRadius).strength(0.82).iterations(2)
+    )
     .force(
       'x',
-      forceX<GraphNodeDatum>((node) => node.anchorX ?? width / 2).strength((node) =>
+      forceX<GraphNode>((node) => node.anchorX ?? 0).strength((node) =>
         node.type === 'root' ? 1 : 0.32
       )
     )
     .force(
       'y',
-      forceY<GraphNodeDatum>((node) => node.anchorY ?? height / 2).strength((node) =>
+      forceY<GraphNode>((node) => node.anchorY ?? 0).strength((node) =>
         node.type === 'root' ? 1 : 0.32
       )
-    )
-    .force('idle', null)
-    .alpha(0.9)
-    .alphaTarget(0)
-    .restart();
+    );
+}
 
-  simulation.tick(24);
-  renderGraph();
+function settle({ alpha, warmupTicks }: { alpha: number; warmupTicks: number }) {
+  stopIdle();
+  const geo = readGeometry();
+  computeAnchors(geo);
+  seedPositions();
+  const sim = ensureSimulation();
 
-  window.setTimeout(() => {
-    if (!simulation) {
-      return;
-    }
-
-    graphNodes.forEach((node) => {
-      node.settleX = node.x;
-      node.settleY = node.y;
+  if (reduceMotion.matches) {
+    nodes.forEach((node) => {
+      node.x = node.anchorX;
+      node.y = node.anchorY;
     });
-
-    simulation
-      .force('link', null)
-      .force('charge', null)
-      .force('collide', null)
-      .force('center', null)
-      .force('idle', createSoftIdleForce())
-      .alpha(0.16)
-      .alphaDecay(0)
-      .velocityDecay(0.86)
-      .alphaTarget(reduceMotion.matches ? 0 : 0.03)
-      .restart();
-  }, 900);
-}
-
-function handleCategoryKeydown(event: KeyboardEvent, node: GraphNodeDatum) {
-  if (event.key !== 'Enter' && event.key !== ' ') {
+    captureSettled();
+    render();
     return;
   }
 
-  event.preventDefault();
-  setActiveBranch(activeBranchId === node.id ? null : node.id);
+  configureForces(geo);
+  sim.alpha(alpha);
+  if (warmupTicks > 0) sim.tick(warmupTicks);
+  render();
+  sim.restart();
 }
 
-function initializeGraph() {
-  const graphData = parseGraphData();
+function startIdle() {
+  if (reduceMotion.matches || idleRaf) return;
+  const start = performance.now();
+  const tick = (now: number) => {
+    const t = (now - start) * 0.001;
+    for (const node of nodes) {
+      if (node.type === 'root' || node.settledX === undefined || node.settledY === undefined) {
+        continue;
+      }
+      const phase = t + node.phase;
+      node.x = node.settledX + Math.cos(phase * 0.61) * node.sway * 2.4;
+      node.y = node.settledY + Math.sin(phase) * node.sway * 3.4;
+    }
+    render();
+    idleRaf = requestAnimationFrame(tick);
+  };
+  idleRaf = requestAnimationFrame(tick);
+}
 
-  if (!graphData || !graphSvg) {
-    return;
+function stopIdle() {
+  if (idleRaf) {
+    cancelAnimationFrame(idleRaf);
+    idleRaf = 0;
   }
+}
 
-  graphNodes = graphData.nodes.map((node, index) => ({
-    ...node,
-    phase: index * 1.618,
-    sway: node.type === 'project' ? 0.65 : 0.5
-  }));
-  graphLinks = graphData.links.map((link) => ({ ...link }));
-
-  const svg = select(graphSvg);
+function buildSelections() {
+  if (!$graphSvg) return false;
+  const svg = select($graphSvg);
   const linkLayer = svg.select<SVGGElement>('.graph-links');
   const nodeLayer = svg.select<SVGGElement>('.graph-nodes');
 
   linkSelection = linkLayer
-    .selectAll<SVGLineElement, GraphLinkDatum>('line')
-    .data(graphLinks, (link) => `${getNodeId(link.source)}-${getNodeId(link.target)}`)
+    .selectAll<SVGLineElement, GraphLink>('line')
+    .data(links, (link) => `${refId(link.source)}-${refId(link.target)}`)
     .join('line')
     .attr('class', (link) => `graph-link graph-link--${link.type}`)
     .classed('is-visible', (link) => link.type === 'primary');
 
-  const interactiveNodes = graphNodes.filter((node) => node.type !== 'root');
-
+  const interactive = nodes.filter((node) => node.type !== 'root');
   nodeSelection = nodeLayer
-    .selectAll<SVGGElement, GraphNodeDatum>('g')
-    .data(interactiveNodes, (node) => node.id)
+    .selectAll<SVGGElement, GraphNode>('g')
+    .data(interactive, (node) => node.id)
     .join((enter) => {
-      const node = enter
+      const group = enter
         .append('g')
-        .attr('class', (datum) => `graph-node graph-node--${datum.type}`)
-        .attr('data-graph-node', (datum) => datum.id);
-
-      node
+        .attr('class', (node) => `graph-node graph-node--${node.type}`)
+        .attr('data-graph-node', (node) => node.id);
+      group
         .append('rect')
         .attr('class', 'graph-hit-area')
-        .attr('x', (datum) => -hitWidthFor(datum) / 2)
+        .attr('x', (node) => -hitWidth(node) / 2)
         .attr('y', -10)
-        .attr('width', hitWidthFor)
-        .attr('height', hitHeightFor)
+        .attr('width', hitWidth)
+        .attr('height', hitHeight)
         .attr('rx', 3);
-      node.append('circle').attr('class', 'graph-dot').attr('r', dotRadiusFor);
-      node
+      group.append('circle').attr('class', 'graph-dot').attr('r', dotRadius);
+      group
         .append('text')
         .attr('class', 'graph-label')
         .attr('text-anchor', 'middle')
-        .attr('y', (datum) => (datum.type === 'project' ? 22 : 24))
-        .text((datum) => datum.label);
-
-      return node;
+        .attr('y', labelOffset)
+        .text((node) => node.label);
+      return group;
     });
 
   nodeSelection
@@ -467,55 +417,67 @@ function initializeGraph() {
     .attr('tabindex', '0')
     .attr('aria-expanded', (node) => (node.type === 'category' ? 'false' : null))
     .on('click', (event, node) => {
-      if (node.href) {
-        handleGraphNavigation(event, node.href);
-        return;
-      }
-
-      setActiveBranch(activeBranchId === node.id ? null : node.id);
+      if (node.href) handleNavigate(event, node.href);
+      else setActiveBranch(activeBranch === node.id ? null : node.id);
     })
     .on('keydown', (event, node) => {
-      if (node.href && (event.key === 'Enter' || event.key === ' ')) {
-        event.preventDefault();
-        navigateTo(node.href);
-        return;
-      }
-
-      if (node.type === 'category') {
-        handleCategoryKeydown(event, node);
-      }
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      if (node.href) navigateTo(node.href);
+      else setActiveBranch(activeBranch === node.id ? null : node.id);
     });
 
-  simulation = forceSimulation<GraphNodeDatum, GraphLinkDatum>(graphNodes)
-    .alphaDecay(0.045)
-    .velocityDecay(0.7)
-    .on('tick', renderGraph);
+  return true;
+}
 
-  restartSimulation();
+function initializeGraph() {
+  const data = parseGraphData();
+  if (!data || !$graphSvg || !$treeContainer) return;
+
+  nodes = data.nodes.map((node, index) => ({
+    ...node,
+    phase: index * 1.618,
+    sway: node.type === 'project' ? 0.65 : 0.5
+  }));
+  links = data.links.map((link) => ({ ...link }));
+
+  if (!buildSelections()) return;
+
   setActiveBranch(null);
+  updateViewport();
+  settle({ alpha: 0.9, warmupTicks: 8 });
 
-  window.addEventListener('resize', restartSimulation);
+  window.addEventListener('resize', () => {
+    if (resizeRaf) cancelAnimationFrame(resizeRaf);
+    resizeRaf = requestAnimationFrame(() => {
+      resizeRaf = 0;
+      updateViewport();
+      settle({ alpha: 0.45, warmupTicks: 0 });
+    });
+  });
+
   window.addEventListener('pagehide', () => {
     simulation?.stop();
+    stopIdle();
   });
 }
 
 document.body.classList.add('js-enabled');
 initializeGraph();
 
-pageLinks.forEach((link) => {
+$pageLinks.forEach((link) => {
   link.addEventListener('click', (event) => {
-    handleGraphNavigation(event, link.href, link.target);
+    handleNavigate(event, link.href, link.target);
   });
 });
 
-if (video instanceof HTMLVideoElement) {
-  video.play().catch(finishIntro);
-  video.addEventListener('ended', finishIntro, { once: true });
+if ($video instanceof HTMLVideoElement) {
+  $video.play().catch(finishIntro);
+  $video.addEventListener('ended', finishIntro, { once: true });
 } else {
   finishIntro();
 }
 
-if (skipButton instanceof HTMLButtonElement) {
-  skipButton.addEventListener('click', finishIntro);
+if ($skipButton instanceof HTMLButtonElement) {
+  $skipButton.addEventListener('click', finishIntro);
 }
