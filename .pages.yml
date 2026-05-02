@@ -193,8 +193,8 @@ content:
             options:
               collection: categories
               search: label
-              value: "{id}"
-              label: "{label}"
+              value: "{name}"
+              label: "{primary}"
           - name: featured
             label: Show on homepage tree
             type: boolean
