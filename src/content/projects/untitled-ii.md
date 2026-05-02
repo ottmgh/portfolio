@@ -6,7 +6,7 @@ featured: true
 summary: |-
   produced by Bambu Film, Il Nuovo Fantarca, Comune di Pomarico
   partner Associazione CLABS, Pharos Film, Straydogs Srl
-video: https://youtu.be/ckCI75WCJf8
+video: https://youtu.be/oLbyA1_C9bY
 ---
 1974: Ninnı ̀ha sedici anni, ama la terra, ma, secondo suo padre, Gianfranco, è troppo sciurlat (esile) per lavorarla. L’unico modo per sfuggire al suo triste destino all’Italsider è ottenere una raccomandazione dal noto politico Aldo Moro, in visita eccezionale a Pomarico.
 
