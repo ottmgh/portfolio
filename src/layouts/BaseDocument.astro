@@ -1,4 +1,5 @@
 ---
+import { ClientRouter } from 'astro:transitions';
 import { Font } from 'astro:assets';
 import '../styles/global.css';
 
@@ -49,6 +50,7 @@ const resolvedOgImage = ogImage && ogImage.length > 0 ? ogImage : null;
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
+    <ClientRouter />
     <slot name="head" />
   </head>
   <body class={bodyClass}>

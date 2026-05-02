@@ -86,8 +86,7 @@
  * The graph geometry is solved in src/scripts/home.ts with d3-force.
  */
 #video-intro,
-#tree-view,
-#page-transition {
+#tree-view {
   position: fixed;
   inset: 0;
 }
@@ -367,18 +366,6 @@
 
 body.js-enabled .home-graph-fallback {
   display: none;
-}
-
-#page-transition {
-  z-index: 40;
-  background: rgba(6, 6, 6, 0.94);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.8s ease;
-}
-
-#page-transition.active {
-  opacity: 1;
 }
 
 @media (max-width: 900px) {

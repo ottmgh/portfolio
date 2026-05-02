@@ -69,11 +69,15 @@ const graphData = JSON.stringify({ nodes: graphNodes, links: graphLinks }).repla
   ogImage={ogImage}
 >
   <script slot="head" is:inline>
-    try {
-      if (sessionStorage.getItem('portfolio:intro-seen') === 'true') {
-        document.documentElement.classList.add('intro-seen');
-      }
-    } catch {}
+    (() => {
+      const key = 'portfolio:intro-seen';
+
+      try {
+        if (sessionStorage.getItem(key) === 'true') {
+          document.documentElement.classList.add('intro-seen');
+        }
+      } catch {}
+    })();
   </script>
 
   <noscript slot="head">
@@ -85,7 +89,7 @@ const graphData = JSON.stringify({ nodes: graphNodes, links: graphLinks }).repla
 
   {hasIntroVideo && (
     <div id="video-intro">
-      <video id="intro-video" muted playsinline autoplay>
+      <video id="intro-video" autoplay muted playsinline>
         <source src={home.introVideo} type="video/mp4" />
       </video>
       <button id="skip-btn">{home.skipLabel}</button>
@@ -137,8 +141,6 @@ const graphData = JSON.stringify({ nodes: graphNodes, links: graphLinks }).repla
     </div>
 
   </div>
-
-  <div id="page-transition"></div>
 
   <script src="../scripts/home.ts"></script>
 </BaseDocument>
