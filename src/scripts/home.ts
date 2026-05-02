@@ -76,6 +76,7 @@ const $graphSvg = document.querySelector<SVGSVGElement>('.home-graph');
 const $graphData = document.getElementById('home-graph-data');
 const $pageLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-page-link]'));
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+const INTRO_SEEN_KEY = 'portfolio:intro-seen';
 
 let nodes: GraphNode[] = [];
 let links: GraphLink[] = [];
@@ -159,9 +160,26 @@ function handleNavigate(event: MouseEvent, href: string, target?: string | null)
   navigateTo(href);
 }
 
-function finishIntro() {
+function hasSeenIntroThisSession() {
+  try {
+    return sessionStorage.getItem(INTRO_SEEN_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function rememberIntroSeen() {
+  try {
+    sessionStorage.setItem(INTRO_SEEN_KEY, 'true');
+  } catch {
+    // Storage may be blocked; intro still functions without persistence.
+  }
+}
+
+function finishIntro({ remember = true } = {}) {
   if (introFinished) return;
   introFinished = true;
+  if (remember) rememberIntroSeen();
   $videoIntro?.classList.add('is-finished');
   window.setTimeout(() => {
     $videoIntro?.remove();
@@ -471,13 +489,15 @@ $pageLinks.forEach((link) => {
   });
 });
 
-if ($video instanceof HTMLVideoElement) {
-  $video.play().catch(finishIntro);
-  $video.addEventListener('ended', finishIntro, { once: true });
+if (hasSeenIntroThisSession()) {
+  finishIntro({ remember: false });
+} else if ($video instanceof HTMLVideoElement) {
+  $video.play().catch(() => finishIntro());
+  $video.addEventListener('ended', () => finishIntro(), { once: true });
 } else {
   finishIntro();
 }
 
 if ($skipButton instanceof HTMLButtonElement) {
-  $skipButton.addEventListener('click', finishIntro);
+  $skipButton.addEventListener('click', () => finishIntro());
 }
