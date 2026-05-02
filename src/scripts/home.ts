@@ -42,6 +42,7 @@ interface GraphNode extends RawGraphNode, SimulationNodeDatum {
   settledY?: number;
   phase: number;
   sway: number;
+  revealIndex: number;
 }
 
 interface GraphLink extends SimulationLinkDatum<GraphNode> {
@@ -96,6 +97,27 @@ const clamp = (value: number, lo: number, hi: number) =>
 
 const refId = (ref: GraphLink['source'] | GraphLink['target'] | undefined): string =>
   typeof ref === 'object' ? ref?.id ?? '' : String(ref ?? '');
+
+const ROMAN_TABLE: ReadonlyArray<readonly [number, string]> = [
+  [10, 'X'],
+  [9, 'IX'],
+  [5, 'V'],
+  [4, 'IV'],
+  [1, 'I']
+];
+
+function toRomanNumeral(input: number): string {
+  let value = Math.max(0, Math.floor(input));
+  if (value === 0) return '';
+  let out = '';
+  for (const [v, glyph] of ROMAN_TABLE) {
+    while (value >= v) {
+      out += glyph;
+      value -= v;
+    }
+  }
+  return out;
+}
 
 function readHomeRuntime(): HomeRuntime | null {
   const treeContainer = document.getElementById('tree-container');
@@ -168,10 +190,10 @@ function readGeometry(runtime: HomeRuntime): Geometry {
     compact,
     cx: width / 2,
     cy: height / 2,
-    horizontalRadius: clamp(width * 0.32, 165, 275),
-    verticalRadius: clamp(height * 0.27, 125, 225),
+    horizontalRadius: clamp(width * 0.32, 165, 320),
+    verticalRadius: clamp(height * 0.27, 125, 240),
     childRadius: clamp(width * 0.12, 88, 125),
-    primaryDistance: clamp(width * 0.21, 130, compact ? 180 : 225),
+    primaryDistance: clamp(width * 0.21, 130, compact ? 180 : 260),
     childDistance: clamp(width * 0.115, 72, compact ? 108 : 132),
     pad: clamp(width * 0.07, 34, 72)
   };
@@ -425,11 +447,19 @@ function buildSelections(runtime: HomeRuntime) {
   const linkLayer = svg.select<SVGGElement>('.graph-links');
   const nodeLayer = svg.select<SVGGElement>('.graph-nodes');
 
+  const nodesById = new Map(runtime.nodes.map((node) => [node.id, node]));
+  const linkRevealIndex = (link: GraphLink): number => {
+    if (link.type !== 'child') return 0;
+    const target = nodesById.get(refId(link.target));
+    return target?.revealIndex ?? 0;
+  };
+
   runtime.linkSelection = linkLayer
     .selectAll<SVGLineElement, GraphLink>('line')
     .data(runtime.links, (link) => `${refId(link.source)}-${refId(link.target)}`)
     .join('line')
     .attr('class', (link) => `graph-link graph-link--${link.type}`)
+    .style('--reveal-index', (link) => String(linkRevealIndex(link)))
     .classed('is-visible', (link) => link.type === 'primary');
 
   const interactive = runtime.nodes.filter((node) => node.type !== 'root');
@@ -440,7 +470,8 @@ function buildSelections(runtime: HomeRuntime) {
       const group = enter
         .append('g')
         .attr('class', (node) => `graph-node graph-node--${node.type}`)
-        .attr('data-graph-node', (node) => node.id);
+        .attr('data-graph-node', (node) => node.id)
+        .style('--reveal-index', (node) => String(node.revealIndex));
       group.each(function appendNodeContent(node) {
         const target = select(this)
           .append(node.href ? 'a' : 'g')
@@ -449,8 +480,7 @@ function buildSelections(runtime: HomeRuntime) {
         if (node.href) {
           target
             .attr('href', node.href)
-            .attr('aria-label', node.label)
-            .attr('data-astro-reload', node.type === 'project' ? '' : null);
+            .attr('aria-label', node.label);
         }
 
         target
@@ -468,6 +498,15 @@ function buildSelections(runtime: HomeRuntime) {
           .attr('text-anchor', 'middle')
           .attr('y', labelOffset(node))
           .text(node.label);
+
+        if (node.type === 'category' && node.childCount && node.childCount > 0) {
+          target
+            .append('text')
+            .attr('class', 'graph-count')
+            .attr('text-anchor', 'middle')
+            .attr('y', labelOffset(node) + 14)
+            .text(toRomanNumeral(node.childCount));
+        }
       });
       return group;
     });
@@ -491,11 +530,21 @@ function initializeGraph(runtime: HomeRuntime) {
   const data = parseGraphData(runtime);
   if (!data) return;
 
-  runtime.nodes = data.nodes.map((node, index) => ({
-    ...node,
-    phase: index * 1.618,
-    sway: node.type === 'project' ? 0.65 : 0.5
-  }));
+  const childIndexByParent = new Map<string, number>();
+  runtime.nodes = data.nodes.map((node, index) => {
+    let revealIndex = 0;
+    if (node.type === 'project' && node.parentId) {
+      const next = childIndexByParent.get(node.parentId) ?? 0;
+      revealIndex = next;
+      childIndexByParent.set(node.parentId, next + 1);
+    }
+    return {
+      ...node,
+      phase: index * 1.618,
+      sway: node.type === 'project' ? 0.6 : 0.45,
+      revealIndex
+    };
+  });
   runtime.links = data.links.map((link) => ({ ...link }));
 
   buildSelections(runtime);
