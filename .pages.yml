@@ -1,165 +1,202 @@
 media:
   - name: images
-    label: Images
+    label: Image library
     input: public/media/images
     output: /media/images
     extensions: [jpg, jpeg, png, webp, svg]
     rename: safe
   - name: videos
-    label: Videos
+    label: Video library
     input: public/media/videos
     output: /media/videos
     categories: [video]
     rename: safe
 
+settings:
+  hide: true
+  content:
+    merge: true
+  commit:
+    templates:
+      create: "content: create {path}"
+      update: "content: update {path}"
+      delete: "content: delete {path}"
+      rename: "content: rename {oldPath} to {newPath}"
+
+components:
+  seoDescription:
+    label: SEO description
+    type: text
+    required: true
+    description: Used in search results and social previews. Keep it clear and under 180 characters.
+    options:
+      maxlength: 180
+  videoAsset:
+    label: Video
+    type: file
+    options:
+      media: videos
+      categories: [video]
+  imageAsset:
+    label: Image
+    type: image
+    options:
+      media: images
+
 content:
-  - name: home
-    label: Homepage
-    type: file
-    path: src/content/site/home.yml
-    operations:
-      delete: false
-    fields:
-      - name: siteTitle
-        label: Site title
-        type: string
-        required: true
-        options:
-          maxlength: 120
-      - name: metaDescription
-        label: Meta description
-        type: text
-        required: true
-        options:
-          maxlength: 180
-      - name: artistName
-        label: Artist name
-        type: string
-        required: true
-        options:
-          maxlength: 80
-      - name: artistSubtitle
-        label: Artist subtitle
-        type: string
-        required: true
-        options:
-          maxlength: 120
-      - name: introVideo
-        label: Intro video
+  - name: pages
+    label: Pages
+    type: group
+    items:
+      - name: home
+        label: Homepage
         type: file
-        required: true
-        options:
-          media: videos
-          categories: [video]
-      - name: skipLabel
-        label: Skip label
-        type: string
-        required: true
-        options:
-          maxlength: 40
-      - name: hintText
-        label: Hint text
-        type: string
-        required: true
-        options:
-          maxlength: 80
-      - name: ogImage
-        label: Open Graph image
-        type: image
-        required: false
-        options:
-          media: images
+        path: src/content/site/home.yml
+        operations:
+          create: false
+          rename: false
+          delete: false
+        fields:
+          - name: siteTitle
+            label: Site title
+            type: string
+            required: true
+            description: Browser title and site name used in previews.
+            options:
+              maxlength: 120
+          - name: metaDescription
+            component: seoDescription
+          - name: artistName
+            label: Artist name
+            type: string
+            required: true
+            description: Main name shown in the center of the homepage.
+            options:
+              maxlength: 80
+          - name: artistSubtitle
+            label: Artist subtitle
+            type: string
+            required: true
+            description: Short line below the artist name.
+            options:
+              maxlength: 120
+          - name: introVideo
+            component: videoAsset
+            label: Intro video
+            required: true
+            description: Autoplay video shown before the homepage tree.
+          - name: skipLabel
+            label: Skip button label
+            type: string
+            required: true
+            description: Very short label for the intro-video skip button.
+            options:
+              maxlength: 40
+          - name: hintText
+            label: Homepage hint
+            type: string
+            required: true
+            description: Small helper text shown below the homepage tree.
+            options:
+              maxlength: 80
+          - name: ogImage
+            component: imageAsset
+            label: Social preview image
+            required: false
+            description: Optional image used when the homepage is shared.
 
-  - name: about
-    label: About
-    type: file
-    path: src/content/site/about.yml
-    operations:
-      delete: false
-    fields:
-      - name: title
-        label: Title
-        type: string
-        required: true
-        options:
-          maxlength: 120
-      - name: intro
-        label: Intro
-        type: text
-        required: true
-        options:
-          maxlength: 280
-      - name: body
-        label: Body
-        type: text
-        required: true
-
-  - name: projects
-    label: Projects
-    type: collection
-    path: src/content/projects
-    filename:
-      template: "{fields.slug}.md"
-      field: create
-    operations:
-      rename: false
-    view:
-      fields: [order, title, year, category]
-      primary: title
-      sort: [order, year, title]
-      search: [title, category]
-      default:
-        sort: order
-        order: asc
-    fields:
-      - name: title
-        label: Title
-        type: string
-        required: true
-        options:
-          maxlength: 120
-      - name: slug
-        label: Slug
-        type: string
-        required: true
-        pattern:
-          regex: "^[a-z0-9-]+$"
-          message: "Use lowercase letters, numbers, and hyphens."
-        options:
-          maxlength: 80
-      - name: order
-        label: Order
-        type: number
-        required: true
-        options:
-          min: 1
-      - name: year
-        label: Year
-        type: number
-        required: true
-        options:
-          min: 1900
-          max: 2100
-      - name: category
-        label: Category
-        type: select
-        required: true
-        options:
-          values:
-            - Film
-            - Documentary
-            - Short Film
-            - Experimental
-      - name: description
-        label: Description
-        type: text
-        required: true
-        options:
-          maxlength: 600
-      - name: video
-        label: Project video
+      - name: about
+        label: About
         type: file
-        required: false
-        options:
-          media: videos
-          categories: [video]
+        path: src/content/site/about.yml
+        operations:
+          create: false
+          rename: false
+          delete: false
+        fields:
+          - name: title
+            label: Page title
+            type: string
+            required: true
+            options:
+              maxlength: 120
+          - name: intro
+            label: Intro
+            type: text
+            required: true
+            description: Short summary used at the top of the page and for metadata.
+            options:
+              maxlength: 280
+          - name: body
+            label: Body
+            type: text
+            required: true
+            description: Main About page text.
+
+  - name: work
+    label: Work
+    type: group
+    items:
+      - name: projects
+        label: Projects
+        type: collection
+        path: src/content/projects
+        subfolders: false
+        filename:
+          template: "{primary}.md"
+          field: false
+        operations:
+          rename: false
+        view:
+          fields: [order, title, year, category]
+          primary: title
+          sort: [order, year, title]
+          search: [title, description, category]
+          default:
+            sort: order
+            order: asc
+        fields:
+          - name: title
+            label: Title
+            type: string
+            required: true
+            description: Used as the project page heading and to generate the URL when creating a new project.
+            options:
+              maxlength: 120
+          - name: order
+            label: Display order
+            type: number
+            required: true
+            description: Lower numbers appear first in the homepage tree and project list.
+            options:
+              min: 1
+          - name: year
+            label: Year
+            type: number
+            required: true
+            options:
+              min: 1900
+              max: 2100
+          - name: category
+            label: Category
+            type: select
+            required: true
+            description: Controls which homepage branch contains the project.
+            options:
+              values:
+                - Film
+                - Documentary
+                - Short Film
+                - Experimental
+          - name: description
+            label: Description
+            type: text
+            required: true
+            description: Used on the project page and as the page summary.
+            options:
+              maxlength: 600
+          - name: video
+            component: videoAsset
+            label: Project video
+            required: false
+            description: Optional video shown on the project detail page.

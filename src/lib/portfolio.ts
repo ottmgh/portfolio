@@ -1,6 +1,5 @@
 import { getCollection, getEntry } from 'astro:content';
-
-const PROJECT_CATEGORIES = ['Film', 'Documentary', 'Short Film', 'Experimental'] as const;
+import { PROJECT_CATEGORIES, PROJECT_SLUG_PATTERN, type ProjectCategory, isProjectCategory } from './portfolio-model';
 
 const CATEGORY_BRANCHES = [
   { id: 'films', label: 'Films', angle: -60, distance: 180, category: 'Film' },
@@ -22,6 +21,29 @@ async function loadProjects() {
 }
 
 type ProjectEntries = Awaited<ReturnType<typeof loadProjects>>;
+type ProjectEntry = ProjectEntries[number];
+
+export interface PortfolioProject {
+  id: string;
+  title: string;
+  slug: string;
+  href: string;
+  order: number;
+  year: number;
+  category: ProjectCategory;
+  description: string;
+  video?: string;
+}
+
+function createEmptyProjectGroups() {
+  return PROJECT_CATEGORIES.reduce(
+    (groups, category) => {
+      groups[category] = [];
+      return groups;
+    },
+    {} as Record<ProjectCategory, PortfolioProject[]>
+  );
+}
 
 function requireEntry<T>(
   entry: T | undefined,
@@ -35,18 +57,19 @@ function requireEntry<T>(
   return entry;
 }
 
-function validateUniqueProjects(
+function validateUniqueProjects<T>(
   projects: ProjectEntries,
-  key: 'slug' | 'order'
+  label: string,
+  getValue: (project: ProjectEntry) => T
 ) {
   const seen = new Map<string, string>();
 
   for (const project of projects) {
-    const value = String(project.data[key]);
+    const value = String(getValue(project));
     const previous = seen.get(value);
 
     if (previous) {
-      throw new Error(`Duplicate project ${key} "${value}" in "${previous}" and "${project.id}"`);
+      throw new Error(`Duplicate project ${label} "${value}" in "${previous}" and "${project.id}"`);
     }
 
     seen.set(value, project.id);
@@ -54,21 +77,39 @@ function validateUniqueProjects(
 }
 
 function validateProjects(projects: ProjectEntries) {
-  validateUniqueProjects(projects, 'slug');
-  validateUniqueProjects(projects, 'order');
+  validateUniqueProjects(projects, 'order', (project) => project.data.order);
+  validateUniqueProjects(projects, 'slug', getProjectSlug);
 
   for (const project of projects) {
-    if (!PROJECT_CATEGORIES.includes(project.data.category)) {
+    if (!isProjectCategory(project.data.category)) {
       throw new Error(`Unsupported category "${project.data.category}" in "${project.id}"`);
     }
 
-    const filename = project.id.split('/').pop()?.replace(/\.[^.]+$/, '') ?? project.id;
-    if (filename !== project.data.slug) {
-      throw new Error(
-        `Project slug "${project.data.slug}" must match filename "${filename}" for "${project.id}"`
-      );
+    const slug = getProjectSlug(project);
+    if (!PROJECT_SLUG_PATTERN.test(slug)) {
+      throw new Error(`Project filename "${project.id}" must resolve to a lowercase URL slug`);
     }
   }
+}
+
+function getProjectSlug(project: ProjectEntry) {
+  return project.id.split('/').pop()?.replace(/\.[^.]+$/, '') ?? project.id;
+}
+
+function toPortfolioProject(project: ProjectEntry): PortfolioProject {
+  const slug = getProjectSlug(project);
+
+  return {
+    id: project.id,
+    title: project.data.title,
+    slug,
+    href: `/projects/${slug}/`,
+    order: project.data.order,
+    year: project.data.year,
+    category: project.data.category,
+    description: project.data.description,
+    video: project.data.video
+  };
 }
 
 export async function getPortfolioContent() {
@@ -78,31 +119,28 @@ export async function getPortfolioContent() {
     'about',
     'src/content/site/about.yml'
   );
-  const projects = await loadProjects();
+  const projectEntries = await loadProjects();
 
-  validateProjects(projects);
+  validateProjects(projectEntries);
 
   return {
     home: homeEntry.data,
     about: aboutEntry.data,
-    projects: projects.sort((left, right) => left.data.order - right.data.order)
+    projects: projectEntries
+      .map(toPortfolioProject)
+      .sort((left, right) => left.order - right.order)
   };
 }
 
 export function getHomepageBranches(
   projects: Awaited<ReturnType<typeof getPortfolioContent>>['projects']
 ) {
-  const groupedProjects = projects.reduce<Record<(typeof PROJECT_CATEGORIES)[number], typeof projects>>(
+  const groupedProjects = projects.reduce<Record<ProjectCategory, typeof projects>>(
     (groups, project) => {
-      groups[project.data.category].push(project);
+      groups[project.category].push(project);
       return groups;
     },
-    {
-      Film: [],
-      Documentary: [],
-      'Short Film': [],
-      Experimental: []
-    }
+    createEmptyProjectGroups()
   );
 
   return [
@@ -111,8 +149,8 @@ export function getHomepageBranches(
       type: 'category' as const,
       children: (groupedProjects[branch.category] ?? []).map((project) => ({
         id: project.id,
-        label: project.data.title,
-        href: `/projects/${project.data.slug}/`
+        label: project.title,
+        href: project.href
       }))
     })),
     {

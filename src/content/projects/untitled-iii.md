@@ -1,6 +1,5 @@
 ---
 title: Untitled III
-slug: untitled-iii
 order: 3
 year: 2023
 category: Film

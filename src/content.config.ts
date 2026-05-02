@@ -1,6 +1,7 @@
 import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
+import { PROJECT_CATEGORIES } from './lib/portfolio-model';
 
 const home = defineCollection({
   loader: glob({ base: './src/content/site', pattern: 'home.{yml,yaml}' }),
@@ -29,10 +30,9 @@ const projects = defineCollection({
   loader: glob({ base: './src/content/projects', pattern: '**/*.md' }),
   schema: z.object({
     title: z.string(),
-    slug: z.string().regex(/^[a-z0-9-]+$/, 'Slug must use lowercase letters, numbers, and hyphens'),
     order: z.number().int(),
     year: z.number().int(),
-    category: z.enum(['Film', 'Documentary', 'Short Film', 'Experimental']),
+    category: z.enum(PROJECT_CATEGORIES),
     description: z.string(),
     video: z.string().optional()
   })

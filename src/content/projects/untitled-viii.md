@@ -1,6 +1,5 @@
 ---
 title: Untitled VIII
-slug: untitled-viii
 order: 8
 year: 2024
 category: Experimental

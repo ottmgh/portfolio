@@ -1,6 +1,5 @@
 ---
 title: Untitled I
-slug: untitled-i
 order: 1
 year: 2024
 category: Film

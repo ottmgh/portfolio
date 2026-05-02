@@ -1,6 +1,5 @@
 ---
 title: Untitled IV
-slug: untitled-iv
 order: 4
 year: 2024
 category: Documentary

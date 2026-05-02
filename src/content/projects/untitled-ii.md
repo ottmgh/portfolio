@@ -1,6 +1,5 @@
 ---
 title: Untitled II
-slug: untitled-ii
 order: 2
 year: 2023
 category: Film

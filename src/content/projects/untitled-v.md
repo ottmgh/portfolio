@@ -1,6 +1,5 @@
 ---
 title: Untitled V
-slug: untitled-v
 order: 5
 year: 2022
 category: Documentary

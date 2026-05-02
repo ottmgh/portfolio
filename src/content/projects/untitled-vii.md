@@ -1,6 +1,5 @@
 ---
 title: Untitled VII
-slug: untitled-vii
 order: 7
 year: 2023
 category: Short Film
