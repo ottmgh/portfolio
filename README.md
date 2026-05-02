@@ -26,9 +26,12 @@ Static Astro portfolio site managed with Bun, edited through Pages CMS, and depl
 ## Editing notes
 
 - **Site settings** edits the values used across every page (browser title, fallback meta description, fallback OG image).
+- Set the default social-preview image before launch. Upload a 1200x630 JPG, PNG, or WebP through Pages CMS; it should be stored under `public/media/images` and referenced as a public path like `/media/images/social-default.jpg`.
 - **Pages → Homepage** controls the homepage tree only (artist name and intro video).
+- The homepage social-preview image is optional. When empty, the site default preview image is used.
 - **Pages → About** has a short Summary used for SEO and a rich-text Body shown on the page.
 - **Catalog → Projects** entries have a `slug` field that controls the URL (`/projects/<slug>/`). Change the slug to change the URL.
+- Project social-preview images are optional. When empty, the site default preview image is used.
 - **Catalog → Categories** drives the homepage branches. Editors only set the visible category label; projects store a stable reference to the category file behind the scenes. To add a new category: create one here, then assign it to a project; it will appear on the homepage automatically.
 - A project shows on the homepage tree when **Show on homepage tree** is enabled. Projects are sorted by year (newest first), then alphabetically.
 - Project videos use YouTube or Vimeo URLs and are rendered as embedded players. Keep local video uploads for the homepage intro only.

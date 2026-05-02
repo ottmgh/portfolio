@@ -83,7 +83,7 @@ content:
             component: imageAsset
             label: Default social preview
             required: false
-            description: Default image used when pages are shared. Individual pages can override it.
+            description: Default image used when pages are shared. Upload a 1200x630 JPG, PNG, or WebP under the image library. Individual pages can override it.
 
   - name: pages
     label: Pages
@@ -128,7 +128,7 @@ content:
             component: imageAsset
             label: Homepage social preview
             required: false
-            description: Optional. Overrides the default site preview when the homepage is shared.
+            description: Optional 1200x630 JPG, PNG, or WebP. Overrides the default site preview when the homepage is shared.
 
       - name: about
         label: About
@@ -214,7 +214,7 @@ content:
             component: imageAsset
             label: Social preview
             required: false
-            description: Optional. Overrides the default site preview when this project is shared.
+            description: Optional 1200x630 JPG, PNG, or WebP. Overrides the default site preview when this project is shared.
 
       - name: categories
         label: Categories
