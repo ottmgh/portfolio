@@ -10,7 +10,6 @@ import {
   type SimulationNodeDatum
 } from 'd3-force';
 import { select, type Selection } from 'd3-selection';
-import { navigate } from 'astro:transitions/client';
 
 type GraphNodeType = 'root' | 'category' | 'project' | 'link';
 type GraphLinkType = 'primary' | 'child';
@@ -186,22 +185,6 @@ function parseGraphData(runtime: HomeRuntime): RawGraphData | null {
   } catch {
     return null;
   }
-}
-
-function isPlainClick(event: MouseEvent) {
-  return (
-    !event.metaKey &&
-    !event.ctrlKey &&
-    !event.shiftKey &&
-    !event.altKey &&
-    event.button === 0
-  );
-}
-
-function handleNavigate(event: MouseEvent, href: string, target?: string | null) {
-  if (!isPlainClick(event) || target === '_blank') return;
-  event.preventDefault();
-  navigate(href);
 }
 
 function removeIntro(runtime: HomeRuntime) {
@@ -458,37 +441,49 @@ function buildSelections(runtime: HomeRuntime) {
         .append('g')
         .attr('class', (node) => `graph-node graph-node--${node.type}`)
         .attr('data-graph-node', (node) => node.id);
-      group
-        .append('rect')
-        .attr('class', 'graph-hit-area')
-        .attr('x', (node) => -hitWidth(node) / 2)
-        .attr('y', -10)
-        .attr('width', hitWidth)
-        .attr('height', hitHeight)
-        .attr('rx', 3);
-      group.append('circle').attr('class', 'graph-dot').attr('r', dotRadius);
-      group
-        .append('text')
-        .attr('class', 'graph-label')
-        .attr('text-anchor', 'middle')
-        .attr('y', labelOffset)
-        .text((node) => node.label);
+      group.each(function appendNodeContent(node) {
+        const target = select(this)
+          .append(node.href ? 'a' : 'g')
+          .attr('class', 'graph-node-target');
+
+        if (node.href) {
+          target
+            .attr('href', node.href)
+            .attr('aria-label', node.label)
+            .attr('data-astro-reload', node.type === 'project' ? '' : null);
+        }
+
+        target
+          .append('rect')
+          .attr('class', 'graph-hit-area')
+          .attr('x', -hitWidth(node) / 2)
+          .attr('y', -10)
+          .attr('width', hitWidth(node))
+          .attr('height', hitHeight(node))
+          .attr('rx', 3);
+        target.append('circle').attr('class', 'graph-dot').attr('r', dotRadius(node));
+        target
+          .append('text')
+          .attr('class', 'graph-label')
+          .attr('text-anchor', 'middle')
+          .attr('y', labelOffset(node))
+          .text(node.label);
+      });
       return group;
     });
 
   runtime.nodeSelection
-    .attr('role', (node) => (node.type === 'category' ? 'button' : 'link'))
-    .attr('tabindex', '0')
+    .attr('role', (node) => (node.type === 'category' ? 'button' : null))
+    .attr('tabindex', (node) => (node.type === 'category' ? '0' : null))
     .attr('aria-expanded', (node) => (node.type === 'category' ? 'false' : null))
-    .on('click', (event, node) => {
-      if (node.href) handleNavigate(event, node.href);
-      else setActiveBranch(runtime, runtime.activeBranch === node.id ? null : node.id);
+    .on('click', (_, node) => {
+      if (!node.href) setActiveBranch(runtime, runtime.activeBranch === node.id ? null : node.id);
     })
     .on('keydown', (event, node) => {
+      if (node.href) return;
       if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();
-      if (node.href) navigate(node.href);
-      else setActiveBranch(runtime, runtime.activeBranch === node.id ? null : node.id);
+      setActiveBranch(runtime, runtime.activeBranch === node.id ? null : node.id);
     });
 }
 
@@ -560,7 +555,7 @@ function initializeHomePage() {
     startIntro(nextRuntime);
   }
 
-  nextRuntime.skipButton?.addEventListener('click', () => dismissIntro(nextRuntime), {
+  nextRuntime.skipButton?.addEventListener('click', () => skipIntroForSession(nextRuntime), {
     once: true
   });
 }
