@@ -36,7 +36,6 @@ const ProjectBody = project.Body;
 
   <main class="mx-auto max-w-6xl px-5 pt-24 pb-14 md:px-8 md:pt-28 md:pb-20">
     <header class="mb-10 text-center">
-      <p class="mb-4 font-mono text-xs tracking-widest uppercase text-white/35">{project.category}</p>
       <h1 class="mb-3 text-3xl font-light tracking-widest md:text-5xl">{project.title}</h1>
       <p class="mx-auto max-w-2xl font-mono text-xs leading-relaxed tracking-widest uppercase text-white/65">{project.category} · {project.year}</p>
     </header>
@@ -52,22 +51,11 @@ const ProjectBody = project.Body;
       </section>
     )}
 
-    <section class="grid items-start gap-10 md:grid-cols-3">
-      <div class="max-w-2xl md:col-span-2">
+    <section class="grid place-items-center">
+      <div class="max-w-2xl">
         <p class="text-lg font-light leading-loose text-white/80 md:text-xl">{project.summary}</p>
         <ProjectBody />
       </div>
-
-      <dl class="grid gap-5 border-t border-white/10 pt-6">
-        <div class="grid gap-1.5">
-          <dt class="font-mono text-xs tracking-widest uppercase text-white/35">Category</dt>
-          <dd class="text-base text-white/75">{project.category}</dd>
-        </div>
-        <div class="grid gap-1.5">
-          <dt class="font-mono text-xs tracking-widest uppercase text-white/35">Year</dt>
-          <dd class="text-base text-white/75">{project.year}</dd>
-        </div>
-      </dl>
     </section>
   </main>
 </BaseDocument>

@@ -1,4 +1,5 @@
 ---
+import { Font } from 'astro:assets';
 import '../styles/global.css';
 
 interface Props {
@@ -38,6 +39,14 @@ const resolvedOgImage = ogImage && ogImage.length > 0 ? ogImage : null;
     <meta property="og:title" content={ogTitle} />
     <meta property="og:description" content={ogDescription} />
     {resolvedOgImage && <meta property="og:image" content={resolvedOgImage} />}
+    <Font
+      cssVariable="--font-cormorant-garamond"
+      preload={[{ weight: 300, style: 'normal', subset: 'latin' }]}
+    />
+    <Font
+      cssVariable="--font-space-mono"
+      preload={[{ weight: 400, style: 'normal', subset: 'latin' }]}
+    />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
     <slot name="head" />
