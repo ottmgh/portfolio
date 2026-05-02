@@ -15,8 +15,15 @@ export interface PortfolioProject {
   featured: boolean;
   summary: string;
   video: string;
+  videoEmbed: PortfolioVideoEmbed | null;
   ogImage: string;
   Body: Awaited<ReturnType<typeof render>>['Content'];
+}
+
+export interface PortfolioVideoEmbed {
+  provider: 'youtube' | 'vimeo';
+  src: string;
+  title: string;
 }
 
 export interface PortfolioCategory {
@@ -40,6 +47,82 @@ function getProjectSlug(project: ProjectEntry) {
 
 function getCategoryReference(category: CategoryEntry) {
   return `${CATEGORY_COLLECTION_PATH}/${category.id}.yml`;
+}
+
+function getYouTubeId(url: URL) {
+  if (url.hostname === 'youtu.be') {
+    return url.pathname.split('/').filter(Boolean)[0] ?? '';
+  }
+
+  if (url.hostname.endsWith('youtube.com') || url.hostname.endsWith('youtube-nocookie.com')) {
+    if (url.pathname === '/watch') return url.searchParams.get('v') ?? '';
+
+    const [, videoId] = url.pathname.match(/^\/(?:embed|shorts|live)\/([^/?#]+)/) ?? [];
+    return videoId ?? '';
+  }
+
+  return '';
+}
+
+function getVimeoEmbed(url: URL) {
+  if (!url.hostname.endsWith('vimeo.com')) return null;
+
+  if (url.hostname === 'player.vimeo.com') {
+    const [, videoId] = url.pathname.match(/^\/video\/(\d+)/) ?? [];
+    return videoId ? url : null;
+  }
+
+  const [videoId, privacyHash] = url.pathname.split('/').filter(Boolean);
+  if (!videoId || !/^\d+$/.test(videoId)) return null;
+
+  const embedUrl = new URL(`https://player.vimeo.com/video/${videoId}`);
+  const hash = url.searchParams.get('h') || privacyHash;
+
+  if (hash) {
+    embedUrl.searchParams.set('h', hash);
+  }
+
+  return embedUrl;
+}
+
+function toVideoEmbed(video: string, projectId: string): PortfolioVideoEmbed | null {
+  const source = video.trim();
+
+  if (!source) return null;
+
+  let url: URL;
+
+  try {
+    url = new URL(source);
+  } catch {
+    throw new Error(
+      `Project "${projectId}" has invalid video URL "${video}". Use a YouTube or Vimeo URL.`
+    );
+  }
+
+  const youTubeId = getYouTubeId(url);
+
+  if (youTubeId) {
+    return {
+      provider: 'youtube',
+      src: `https://www.youtube-nocookie.com/embed/${youTubeId}`,
+      title: 'YouTube video player'
+    };
+  }
+
+  const vimeoEmbed = getVimeoEmbed(url);
+
+  if (vimeoEmbed) {
+    return {
+      provider: 'vimeo',
+      src: vimeoEmbed.toString(),
+      title: 'Vimeo video player'
+    };
+  }
+
+  throw new Error(
+    `Project "${projectId}" has unsupported video URL "${video}". Use a YouTube or Vimeo URL.`
+  );
 }
 
 function assertUniqueSlugs(projects: ProjectEntry[]) {
@@ -123,6 +206,7 @@ async function toPortfolioProject(
     featured: project.data.featured,
     summary: project.data.summary,
     video: project.data.video,
+    videoEmbed: toVideoEmbed(project.data.video, project.id),
     ogImage: project.data.ogImage,
     Body: Content
   };
