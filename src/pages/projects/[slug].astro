@@ -50,10 +50,10 @@ const ProjectBody = project.Body;
     back
   </a>
 
-  <main transition:animate={fade({ duration: '0.4s' })} class="mx-auto max-w-5xl px-5 pt-7 pb-16 md:px-8 md:pt-7 md:pb-24">
+  <main transition:animate={fade({ duration: '0.4s' })} class="mx-auto max-w-5xl px-5 pt-20 pb-16 md:px-8 md:pt-7 md:pb-24">
     <header class="mb-12 max-w-2xl md:mb-16">
-      <p class="mb-4 font-mono text-[0.6rem] tracking-[0.34em] uppercase text-white/40 md:mb-5">{project.category.label} · {project.year}</p>
-      <h1 class="text-4xl font-light tracking-[0.22em] md:text-6xl">{project.title}</h1>
+      <p class="mb-4 font-mono text-[0.6rem] tracking-[0.24em] uppercase text-white/40 md:mb-5 md:tracking-[0.34em]">{project.category.label} · {project.year}</p>
+      <h1 class="text-3xl font-light tracking-[0.12em] md:text-6xl md:tracking-[0.22em]">{project.title}</h1>
     </header>
 
     {project.videoEmbed && (

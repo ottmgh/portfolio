@@ -165,8 +165,8 @@
 
 #tree-container {
   position: relative;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   transform-origin: center center;
 }
 
@@ -248,7 +248,7 @@
   position: absolute;
   inset: 0;
   contain: layout paint;
-  overflow: visible;
+  overflow: hidden;
   shape-rendering: geometricPrecision;
   transform: translateZ(0);
   z-index: 6;

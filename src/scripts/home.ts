@@ -184,11 +184,11 @@ function readGeometry(runtime: HomeRuntime): Geometry {
     compact,
     cx: width / 2,
     cy: height / 2,
-    horizontalRadius: clamp(width * 0.32, 165, 320),
-    verticalRadius: clamp(height * 0.27, 125, 240),
-    childRadius: clamp(width * 0.12, 88, 125),
-    primaryDistance: clamp(width * 0.21, 130, compact ? 180 : 260),
-    childDistance: clamp(width * 0.115, 72, compact ? 108 : 132),
+    horizontalRadius: clamp(width * 0.32, compact ? 100 : 165, 320),
+    verticalRadius: clamp(height * 0.27, compact ? 100 : 125, 240),
+    childRadius: clamp(width * 0.14, compact ? 50 : 88, 125),
+    primaryDistance: clamp(width * 0.21, compact ? 80 : 130, compact ? 180 : 260),
+    childDistance: clamp(width * 0.115, compact ? 40 : 72, compact ? 108 : 132),
     pad: clamp(width * 0.07, 34, 72)
   };
 }
@@ -249,13 +249,28 @@ function setActiveBranch(runtime: HomeRuntime, branchId: string | null) {
 
 function computeAnchors(runtime: HomeRuntime, geo: Geometry) {
   const primaries = runtime.nodes.filter((n) => n.type === 'category' || n.type === 'link');
+
+  const weights = primaries.map((n) => 1 + (n.childCount ?? 0) * 0.5);
+  const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+
   const startAngle = -Math.PI * 0.36;
+  let cumWeight = 0;
   primaries.forEach((node, index) => {
-    const angle = startAngle + (index / primaries.length) * Math.PI * 2;
+    const midWeight = cumWeight + weights[index] / 2;
+    const angle = startAngle + (midWeight / totalWeight) * Math.PI * 2;
     node.anchorAngle = angle;
     node.anchorX = geo.cx + Math.cos(angle) * geo.horizontalRadius;
     node.anchorY = geo.cy + Math.sin(angle) * geo.verticalRadius;
+    cumWeight += weights[index];
   });
+
+  if (geo.compact) {
+    const labelPad = 60;
+    for (const node of primaries) {
+      node.anchorX = clamp(node.anchorX!, labelPad, geo.width - labelPad);
+      node.anchorY = clamp(node.anchorY!, geo.pad + 20, geo.height - geo.pad - 20);
+    }
+  }
 
   const groups = new Map<string, GraphNode[]>();
   for (const node of runtime.nodes) {
@@ -268,11 +283,13 @@ function computeAnchors(runtime: HomeRuntime, geo: Geometry) {
     const parent = runtime.nodes.find((n) => n.id === parentId);
     if (!parent) continue;
     const parentAngle = parent.anchorAngle ?? 0;
+    const spread = Math.min(0.34, 1.2 / (siblings.length + 1));
+    const radius = geo.childRadius * (1 + Math.max(0, siblings.length - 2) * 0.1);
     siblings.forEach((node, index) => {
-      const spread = (index - (siblings.length - 1) / 2) * 0.34;
-      const angle = parentAngle + spread;
-      node.anchorX = (parent.anchorX ?? geo.cx) + Math.cos(angle) * geo.childRadius;
-      node.anchorY = (parent.anchorY ?? geo.cy) + Math.sin(angle) * geo.childRadius;
+      const offset = (index - (siblings.length - 1) / 2) * spread;
+      const angle = parentAngle + offset;
+      node.anchorX = (parent.anchorX ?? geo.cx) + Math.cos(angle) * radius;
+      node.anchorY = (parent.anchorY ?? geo.cy) + Math.sin(angle) * radius;
     });
   }
 
@@ -320,12 +337,16 @@ function ensureSimulation(runtime: HomeRuntime): Simulation<GraphNode, GraphLink
   if (runtime.simulation) return runtime.simulation;
   runtime.simulation = forceSimulation<GraphNode, GraphLink>(runtime.nodes)
     .stop()
+    .alphaDecay(0.02)
+    .velocityDecay(0.7)
     .on('tick', () => renderNow(runtime));
   return runtime.simulation;
 }
 
 function configureForces(runtime: HomeRuntime, geo: Geometry) {
   if (!runtime.simulation) return;
+  const anchorStrength = geo.compact ? 0.5 : 0.32;
+  const collideScale = geo.compact ? 0.6 : 1;
   runtime.simulation
     .force(
       'link',
@@ -334,28 +355,51 @@ function configureForces(runtime: HomeRuntime, geo: Geometry) {
         .distance((link) =>
           link.type === 'primary' ? geo.primaryDistance : geo.childDistance
         )
-        .strength((link) => (link.type === 'primary' ? 0.9 : 0.78))
-        .iterations(3)
+        .strength((link) => (link.type === 'primary' ? 0.7 : 0.6))
+        .iterations(2)
     )
     .force(
       'charge',
-      forceManyBody<GraphNode>().strength((node) => (node.type === 'root' ? -520 : -75))
+      forceManyBody<GraphNode>()
+        .strength((node) =>
+          node.type === 'root'
+            ? (geo.compact ? -200 : -380)
+            : (geo.compact ? -25 : -55)
+        )
+        .distanceMax(geo.compact ? 250 : 400)
     )
     .force(
       'collide',
-      forceCollide<GraphNode>().radius(nodeRadius).strength(0.82).iterations(2)
+      forceCollide<GraphNode>()
+        .radius((node) => nodeRadius(node) * collideScale)
+        .strength(0.7)
+        .iterations(3)
     )
     .force(
       'x',
       forceX<GraphNode>((node) => node.anchorX ?? 0).strength((node) =>
-        node.type === 'root' ? 1 : 0.32
+        node.type === 'root' ? 1 : anchorStrength
       )
     )
     .force(
       'y',
       forceY<GraphNode>((node) => node.anchorY ?? 0).strength((node) =>
-        node.type === 'root' ? 1 : 0.32
+        node.type === 'root' ? 1 : anchorStrength
       )
+    )
+    .force(
+      'bounds',
+      geo.compact
+        ? () => {
+            const padX = 60;
+            const padY = 30;
+            for (const node of runtime.nodes) {
+              if (node.type === 'root') continue;
+              node.x = clamp(node.x!, padX, geo.width - padX);
+              node.y = clamp(node.y!, padY, geo.height - padY);
+            }
+          }
+        : null
     );
 }
 
@@ -487,14 +531,14 @@ function initializeGraph(runtime: HomeRuntime) {
   buildSelections(runtime);
   setActiveBranch(runtime, null);
   updateViewport(runtime);
-  settle(runtime, { alpha: 0.9, warmupTicks: 8 });
+  settle(runtime, { alpha: 0.5, warmupTicks: 150 });
 
   const handleResize = () => {
     if (runtime.resizeRaf) cancelAnimationFrame(runtime.resizeRaf);
     runtime.resizeRaf = requestAnimationFrame(() => {
       runtime.resizeRaf = 0;
       updateViewport(runtime);
-      settle(runtime, { alpha: 0.45, warmupTicks: 0 });
+      settle(runtime, { alpha: 0.15, warmupTicks: 8 });
     });
   };
 
