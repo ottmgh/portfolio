@@ -4,7 +4,7 @@ year: 2025
 category: src/content/categories/short-film.yml
 featured: true
 summary: produced by Pagnotta TV
-video: https://youtu.be/Wpn9Rc9CjJQ
+video: https://youtu.be/qMbeBzFXNXk
 ogImage: /media/images/screenshot-2025-03-27-alle-183224.png
 ---
 In a village devoid of young people, a carousel transformed into a rejuvenation machine upsets the balance of the surviving elderly, leading them to discover that death is not the end.
