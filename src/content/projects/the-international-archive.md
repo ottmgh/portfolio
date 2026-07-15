@@ -11,7 +11,7 @@ summary: "*The International Archive* is a whimsical, ongoing project that
 
 ![](/media/images/whatsapp-image-2026-06-29-at-175641.jpeg)
 
-At its core is a simple but radical idea: the film workshop as an ethnographic device. The project treats the act of making a film together deciding what to point the camera at, what story to tell, what world to invent, as a way of surfacing how a community imagines itself and the world around it. People become co-researchers: their stories, drawings, and choices in front of and behind the camera reveal imaginaries that adult-led documentation often misses.
+At its core is an academic idea: the film workshop as an ethnographic device. The project treats the act of making a film together, deciding what world to invent, as a way of surfacing how a community imagines itself and the world around it. People become co-researchers: their stories, drawings, and choices in front of and behind the camera reveal imaginaries outside academia.
 
 ![](/media/images/whatsapp-image-2026-06-29-at-175641-2.jpeg)
 
