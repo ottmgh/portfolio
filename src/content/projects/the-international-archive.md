@@ -7,7 +7,7 @@ summary: "*The International Archive* is a whimsical, ongoing project that
   collects perspectives on the world (places, memories, and above all,
   collective imaginaries)"
 ---
-*The International Archive* is a whimsical, ongoing project that collects perspectives on the world (places, memories, and above all, collective imaginaries) through two intertwined practices: documentary filmmaking and film workshops, held especially with children.
+*The International Archive* is a whimsical, ongoing visual anthropology project that collects perspectives on the world (places, memories, and above all, collective imaginaries) through two intertwined practices: documentary filmmaking and film workshops, held especially with children.
 
 ![](/media/images/whatsapp-image-2026-06-29-at-175641.jpeg)
 
