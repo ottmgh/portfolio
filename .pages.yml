@@ -45,6 +45,9 @@ components:
   videoEmbedUrl:
     label: Video URL
     type: string
+    pattern:
+      regex: '^https://(?:youtu\.be/[^/?#]+|(?:[A-Za-z0-9-]+\.)?youtube(?:-nocookie)?\.com/(?:watch\?(?:[^#]*&)?v=[^&#]+|(?:embed|shorts|live)/[^/?#]+)|(?:www\.)?vimeo\.com/\d+(?:/[^/?#]+)?|player\.vimeo\.com/video/\d+)(?:[?&#].*)?$'
+      message: Enter a valid YouTube or Vimeo URL. Add links from other providers to the Body.
     options:
       placeholder: https://www.youtube.com/watch?v=amH9a78STPk
   bodyContent:
@@ -209,7 +212,7 @@ content:
             component: videoEmbedUrl
             label: Project video
             required: false
-            description: Optional YouTube or Vimeo URL shown as an embedded player on the project page. Unlisted/private-share URLs are supported when the provider allows embedding.
+            description: Optional YouTube or Vimeo URL shown as an embedded player. Add Instagram and other providers as links in the Body.
           - name: ogImage
             component: imageAsset
             label: Social preview
